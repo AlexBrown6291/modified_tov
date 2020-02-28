@@ -9,37 +9,19 @@ import math
 G = 6.67408 * 10.**(-11.) #SI m^3 kg^-1 s^-2
 c = 3.00 * 10.**8. #SI m/s
 hbar = 1.0546 * 10.**(-34.) #SI = J * s 
-#hbar = hbar * G * c**(-4.)
-#hbar = hbar * c
-print "hbar = ", hbar
-hbar_g = 137.
-
-
-"""e_0 = 1.603 * 10.**(38.) #cgs   ergs/cm^3 
-e_0 = e_0 * 1. * 10.**(-7.) #Convert to J/cm^3
-e_0 = e_0 * 100.**(3.) #convert to J/m^3 (SI)
-e_0_g = e_0 * G * c**(-4.) # Geometric units"""
-
 M_sun = 1.989 * 10.**(30.) #SI kg
 n = 1.
 gamma = (n+1.)/n
 
-m_e = 9.11 * 10.**(-31.)
-m_h = 1.67  * 10**(-24.) # g
-m_h = m_h / 1000. #kg 
-#m_h = m_h * G / c**(2.) #geometric
-m_e = m_e * G /c**(2.) #geometric
-#print m_e
-#K = (hbar/(12*np.pi**2.))* ((3*np.pi)/(m_h))**(4./3.)
+m_e = 9.11 * 10.**(-31.) # kg
+m_h = 1.67  * 10**(-27.) # kg
+
 K_si = (hbar * c /(12*np.pi**2.)) * ((3*np.pi)/(m_h * c))**(4./3.)
 K = K_si * G**(-1./3.) * c**(2./3.)
-print "k = ", K
-#print "electron mass ^ 4/3 ", (m_e)**(4./3.)
-#print "nucleon mass = ", m_h
-#print "K from paper = ", (137./(12*np.pi**2.))* ((3*np.pi)/(m_h))**(4./3.)
 
-#K = 20000.
-#K = K_si
+print "k = ", K
+
+
 def EOS(p):
 
     rho = ((p_c * p)/(K))**(1./gamma) / rho_c 
@@ -51,7 +33,6 @@ def TOV(r,y):
     p = y[1]
 
     rho = EOS(p)
-    #print rho
 
     dMdr = 4 * np.pi * r**2. * rho * rho_c 
     dpdr = - ( 1. * rho * M * rho_c) / (r**2. * p_c)
@@ -65,11 +46,12 @@ def TOV(r,y):
 def star_boundary(r,y):
     return y[1]
 
+#Set star boundary at pressure = 0
 star_boundary.terminal = True
+
 #Initial Conditions
 
 M_0 = 0.
-#p_0 = 5.  #dimensionless
 r_0 = 0.1 #m
 r_stop = 20 #km
 r_stop = r_stop * 10.**(3.) #SI = m
@@ -77,12 +59,9 @@ r_stop = r_stop * 10.**(3.) #SI = m
 radii = []
 masses = []
 t_span = (r_0,r_stop)
-#print t_span
 
-p = np.logspace(35.,36.,num=10) #SI
-print p
+p = np.logspace(35.,36.,num=100) #SI
 p = p * G * c**(-4.) # Geometric units
-print p
 
 
 i = 0
@@ -92,8 +71,8 @@ for x in p:
     rho_c = (p_c/K)**(1./gamma)
 
     y0 = [M_0,p_0]
-    print "rho_scale = ", rho_c
-    print "pscale = ", p_c
+    #print "rho_scale = ", rho_c
+    #print "pscale = ", p_c
 
     soln = solve_ivp(TOV,t_span,y0,method='RK45',events=star_boundary,dense_output=True)
 
@@ -101,11 +80,13 @@ for x in p:
     M = soln.y[0]
     p = soln.y[1]
 
+    #Convert Mass and Radius to solar masses and km
+
     M  = M * c**2./G #from geom to SI
     M =  M / M_sun #to solar masses
-    #r = r * 10**(-3.) #to km
+    r = r * 10**(-3.) #to km
 
-    z = soln.t_events
+    #z = soln.t_events
     #print z
 
     radii.append(r[-1])
@@ -123,6 +104,7 @@ for x in p:
     ps = []
     r_n = (((n+1.) * K )/(1.* 4.*np.pi)) * rho_c**(1./n-1.)  #G= 1
     r_n = r_n**(1./2.)
+    r_n = r_n * 10.**(-3.) #convert to km
     #print r_n
     #print r
     xi = r / r_n
@@ -157,9 +139,9 @@ for x in range(1,20):
 
 
 
-#K = 1.914 
-#R = ((np.pi*K)/(2.))**(1./2.)
-#R = R*10.**(-3.)
+
+R = ((np.pi*K)/(2.))**(1./2.)
+R = R*10.**(-3.)
 print "exact solution gives r = ", R
 print "code solution gives r = ", radii[0]
 
