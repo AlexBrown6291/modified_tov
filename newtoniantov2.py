@@ -9,6 +9,9 @@ import math
 G = 6.67408 * 10.**(-11.) #SI m^3 kg^-1 s^-2
 c = 3.00 * 10.**8. #SI m/s
 hbar = 1.0546 * 10.**(-34.) #SI = J * s 
+#hbar = hbar * G * c**(-4.)
+#hbar = hbar * c
+print "hbar = ", hbar
 hbar_g = 137.
 
 
@@ -27,16 +30,17 @@ m_h = m_h / 1000. #kg
 #m_h = m_h * G / c**(2.) #geometric
 m_e = m_e * G /c**(2.) #geometric
 #print m_e
-#K_si = ((hbar*c)/(12 * np.pi)) * ((3*np.pi**2.)/(m_h * c**2.))**(4./3.)
-K = (137./(12*np.pi**2.))* ((3*np.pi)/(m_h))**(4./3.)
+#K = (hbar/(12*np.pi**2.))* ((3*np.pi)/(m_h))**(4./3.)
+K_si = (hbar * c /(12*np.pi**2.)) * ((3*np.pi)/(m_h * c))**(4./3.)
+K = K_si * G**(-1./3.) * c**(2./3.)
+print "k = ", K
 #print "electron mass ^ 4/3 ", (m_e)**(4./3.)
 #print "nucleon mass = ", m_h
 #print "K from paper = ", (137./(12*np.pi**2.))* ((3*np.pi)/(m_h))**(4./3.)
 
-K = 20000.
+#K = 20000.
 #K = K_si
 def EOS(p):
-    #K = 1.914 
 
     rho = ((p_c * p)/(K))**(1./gamma) / rho_c 
     #print p,rho 
@@ -75,7 +79,7 @@ masses = []
 t_span = (r_0,r_stop)
 #print t_span
 
-p = np.logspace(40.,45.,num=10) #SI
+p = np.logspace(35.,36.,num=10) #SI
 print p
 p = p * G * c**(-4.) # Geometric units
 print p
@@ -152,12 +156,6 @@ for x in range(1,20):
     rhos.append(EOS(x))
 
 
-"""p = []
-rh = []
-
-rh = np.linspace(0,1,20)
-for x in rh:
-    p.append(1.914 * x**(5./3.))"""
 
 #K = 1.914 
 #R = ((np.pi*K)/(2.))**(1./2.)
