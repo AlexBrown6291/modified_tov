@@ -43,7 +43,7 @@ K_bar = K * G**(-1./3.) * c**(-4./3.)
 
 def EOS(p):
 
-    rho = (p/K_bar)**(1./gamma)
+    rho = (p_c * p/K_bar)**(1./gamma) / rho_c
 
     return rho
 
@@ -54,8 +54,8 @@ def TOV(r,y):
 
     rho = EOS(p)
     #print p
-    dMdr = 4. * np.pi * rho * r**2.
-    dpdr = - 1. * M * rho /r**2.
+    dMdr = 4. * np.pi * rho * rho_c * r**2.
+    dpdr = - 1. * M * rho * rho_c/(r**2.* p_c)
     #print dpdr
 
 
@@ -87,8 +87,14 @@ radii = []
 masses = []
 
 
+
 for x in pressures:
-    y0 = [M_0,x]
+
+    p_c = x
+    rho_c = (p_c/K_bar)**(1./gamma)
+
+    p_0 = x/p_c
+    y0 = [M_0,p_0]
     #y0 = [x]
     #print y0
 
@@ -101,6 +107,7 @@ for x in pressures:
     #print soln
 
     M = M * c**2. / G
+    #p = p * p_c
 
     radii.append(r[-1]/1000.)
     masses.append(M[-1])
@@ -126,7 +133,9 @@ for x in pressures:
     i+=1
 
 
-y0 = [0,10.**33.]
+y0 = [0,1.]
+p_c = 10.**33. * G * c**(-4.)
+rho_c = (p_c/K_bar)**(1./gamma)
 soln = solve_ivp(TOV,t_span,y0,method='RK45', events=star_boundary, t_eval=t_eval, dense_output=True)
 r = soln.t
 #print soln.t
@@ -138,8 +147,10 @@ r = r/1000.
 
 
 #test cgs
+#p = p * p_c #geometric 
+#p = p * c**4. / G  # SI
+#p = p * 10. #bayre
 
-p = p * 10. #bayre
 
 #print masses 
 
@@ -147,7 +158,7 @@ plt.plot(r,p, label='numerical')
 plt.legend()
 plt.xlabel("radius (km)")
 plt.ylabel("pressure")
-plt.savefig("plots/pressure_profile_g.pdf")
+plt.savefig("plots/pressure_profile_dim.pdf")
 plt.close()
 
 
