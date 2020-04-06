@@ -52,8 +52,9 @@ print "c^(-4/3) = ", c_cgs**(-4./3.)
 print "G^(-1/3) = ", g_cgs**(-1./3.)
 print "dimensionless k = ", K_bar"""
 
-n = 3.
+n = 0.
 gamma = (n+1)/n
+K = K_nr
 #gamma = 5./3.
 
 def EOS(p):
@@ -104,111 +105,13 @@ p0 = 10.**35.
 y0 = [M0,p0]
 
 r_0 = 0.1
-r_stop = 25. #km
+r_stop = 90000. #km
 r_stop = r_stop * 10.**3. #to m
 r_stop = r_stop * 100. #to cm
 r_eval = np.linspace(r_0,r_stop,num=4000)
 
-radii = []
-masses = []
-
-pressures = np.logspace(34,45,num=11) #Use for relativsitic case
-#pressures = np.logspace(12,22,num=10) #Use for nonrelativsitic case
-r_start = np.logspace(0.00001,0.1,20)
-i = 1
-#pressures = [10.**34.]
-for x in r_start:
-    M0 = 0
-    p0 = 10.**37.
-    y0 = [M0,p0]
-    print p0
-    soln = solve_ivp(TOV, (x,r_stop), [M0,p0], events=star_boundary, dense_output=True)
-    rs = soln.t
-    m = soln.y[0]
-    p = soln.y[1]
-
-    rs = rs / 100.
-    rs = rs / 10**(3.) #back to km
-
-    """soln = odeint(TOV_odeint,y0,r_eval)
-    mass = soln[:,0]
-    press = soln[:,1]
-    r = r_eval/100
-    r = r/1000"""
-
-    print rs[-1]
-    radii.append(rs[-1])
-    masses.append(m[-1])
-    """#plt.plot(r,press,label="ode_int")
-    plt.plot(rs,p) #,label="solve_ivp")
-    plt.legend()
-    plt.xlabel("radius km")
-    plt.ylabel("pressure bayre")
-    plt.savefig("plots/pressure-radius_cgs" + str(i) +".pdf")
-    plt.close()"""
-    i += 1
-
-for x in range(0,len(masses)):
-    masses[x] = masses[x]/m_sun_cgs
-    print masses[x]
-
-plt.scatter(radii,masses)
-plt.xlabel("radius km")
-plt.ylabel("mass g")
-plt.savefig("plots/mass-radius_rstart.pdf")
-plt.close()
-
-
-
-
-
-"""plt.plot(rs,m)
-plt.legend()
-plt.xlabel("radius km")
-plt.ylabel("Mass g")
-plt.savefig("plots/mass-radius_cgs.pdf")
-plt.close()"""
-
-
-
-ps = np.logspace(10,41,num=100)
-#ps = np.linspace(10.**23,20.*10.**23.,num=100)
-#print ps
-rhos = EOS(ps)
-
-#e_cgs = rhos * c_cgs**2.
-
-"""plt.loglog(rhos,ps)
-#plt.xscale('log')
-plt.xlabel("density g/cm3")
-#plt.yscale('log')
-plt.ylabel("pressure dynes/cm^2")
-plt.savefig("plots/pressure-density_cgs_notes.pdf")
-plt.close()"""
-
-"""e = np.linspace(10.**27.,20*10.**27,num=100)
-e = e/(c_cgs**2.)
-p = K_cgs * e**(gamma)
-e = e * c_cgs**2.
-
-plt.plot(e,p)
-plt.xlabel("energy density ergs/cm3")
-plt.ylabel("pressure dynes/cm^2")
-plt.savefig("plots/pressure-energydensity_cgs_2.pdf")"""
-
-#One single event 
-M_0 = 0.
-p_0 = 10.**34.
-y0 = [M_0,p_0]
-
-r_0 = 0.01 #m
-r_stop = 20. #km
-r_stop = r_stop * 10.**(3.) #SI = m
-r_stop = r_stop * 100 #cm 
-
 t_span = (r_0,r_stop)
 t_eval = np.linspace(r_0,r_stop,10000)
-
 
 soln = solve_ivp(TOV,t_span,y0,method='RK45', events=star_boundary, dense_output=True, t_eval=t_eval)
 
@@ -217,4 +120,34 @@ M = soln.y[0]
 p = soln.y[1]
     
 mout = M[-1]/m_sun_cgs    
-print "output = ", p[0], r[-1], mout
+print "output = ", p[0], r[-1], 
+
+#Exact Solution for the Radius
+
+rho0 = EOS(p0)
+# R = (((1.+1.)*p0 )/(4*np.pi * g_cgs * rho0**2))**0.5 * np.pi  #n=1
+R = (((1.+1.)*p0 )/(4*np.pi * g_cgs * rho0**2))**0.5 * 6.**0.5
+print "Exact Radius = ", R
+#Exact solution of the pressure
+print "R_calc - R_exact = ", r[-1] - R
+error = abs((r[-1] - R)/R)
+print "percent error is ", error
+
+R_s = (((1.+1.)*p0 )/(4*np.pi * g_cgs * rho0**2))**0.5
+xi = r / R_s
+print max(xi)
+theta = np.sin(xi) / xi
+P = p0 * theta**(n+1)
+
+r = r/100.
+r = r/1000.
+
+
+plt.plot(r,p,label='numerical')
+plt.plot(r,P,label='exact')
+
+plt.xlabel("Radius (km)")
+plt.ylabel("pressure dynes/cm^2")
+plt.legend()
+plt.savefig("plots/pressure-radius_exact.pdf")
+plt.close()
