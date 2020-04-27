@@ -215,6 +215,15 @@ soln = solve_ivp(TOV,t_span,y0,method='RK45', events=star_boundary, dense_output
 r = soln.t
 M = soln.y[0]
 p = soln.y[1]
+r = r/100.
+r = r/1000.
     
+plt.plot(r,p)
+#plt.legend()
+plt.xlabel("radius (km)")
+plt.ylabel("pressure")
+plt.savefig("plots/pressure_profile_cgs.pdf")
+plt.close()
+
 mout = M[-1]/m_sun_cgs    
 print "output = ", p[0], r[-1], mout

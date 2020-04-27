@@ -11,7 +11,7 @@ c = 3.00 * 10.**8. #SI m/s
 hbar = 1.0546 * 10.**(-34.) #SI = J * s 
 h = hbar*2.*np.pi
 M_sun = 1.989 * 10.**(30.) #SI kg
-#n = 1.
+
 n = 3.
 gamma = (n+1.)/n
 #print gamma
@@ -71,7 +71,7 @@ star_boundary.terminal = True
 
  
 M_0 = 0.
-r_0 = 0.1 #m
+r_0 = 0.00001 #m
 r_stop = 20. #km
 r_stop = r_stop * 10.**(3.) #SI = m
 t_span = (r_0,r_stop)
@@ -136,7 +136,7 @@ for x in pressures:
 y0 = [0,1.]
 p_c = 10.**33. * G * c**(-4.)
 rho_c = (p_c/K_bar)**(1./gamma)
-soln = solve_ivp(TOV,t_span,y0,method='RK45', events=star_boundary, t_eval=t_eval, dense_output=True)
+soln = solve_ivp(TOV,t_span,y0,method='RK45', events=star_boundary, t_eval=t_eval, dense_output=True, rtol=10.**(-6.))
 r = soln.t
 #print soln.t
 M = soln.y[0]

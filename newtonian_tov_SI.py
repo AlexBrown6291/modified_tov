@@ -38,7 +38,7 @@ K = K * 0.5**(4./3.)
 #print "G^(-1/3) = ", G**(-1./3.)
 
 K_bar = K * G**(-1./3.) * c**(-4./3.)
-#print "dimensionless K = ", K_bar
+print "dimensionless K = ", K_bar
 
 
 
@@ -96,7 +96,7 @@ masses = []
 for x in pressures:
     y0 = [M_0,x]
     #y0 = [x]
-    #print y0
+    print y0
 
     soln = solve_ivp(TOV,t_span,y0,method='RK45', events=star_boundary, dense_output=True)
 
@@ -108,7 +108,8 @@ for x in pressures:
 
     radii.append(r[-1])
     masses.append(M[-1])
-    print p[0], r[-1], M[-1]
+
+    print p[0], r[-1], M[-1]/M_sun
 
     plt.plot(r,M)
     plt.xlabel("radius (m)")

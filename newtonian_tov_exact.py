@@ -52,7 +52,8 @@ print "c^(-4/3) = ", c_cgs**(-4./3.)
 print "G^(-1/3) = ", g_cgs**(-1./3.)
 print "dimensionless k = ", K_bar"""
 
-n = 0.
+n = 1.
+#n = 5.
 gamma = (n+1)/n
 K = K_nr
 #gamma = 5./3.
@@ -122,11 +123,11 @@ p = soln.y[1]
 mout = M[-1]/m_sun_cgs    
 print "output = ", p[0], r[-1], 
 
-#Exact Solution for the Radius
+#Exact Solution for the Radius for n=1
 
 rho0 = EOS(p0)
-# R = (((1.+1.)*p0 )/(4*np.pi * g_cgs * rho0**2))**0.5 * np.pi  #n=1
-R = (((1.+1.)*p0 )/(4*np.pi * g_cgs * rho0**2))**0.5 * 6.**0.5
+R = (((1.+1.)*p0 )/(4*np.pi * g_cgs * rho0**2))**0.5 * np.pi  #n=1
+#R = (((1.+1.)*p0 )/(4*np.pi * g_cgs * rho0**2))**0.5 * 6.**0.5 #n=0
 print "Exact Radius = ", R
 #Exact solution of the pressure
 print "R_calc - R_exact = ", r[-1] - R
@@ -139,11 +140,18 @@ print max(xi)
 theta = np.sin(xi) / xi
 P = p0 * theta**(n+1)
 
+#Exact Solution for the Radius for n=5
+"""rho0 = EOS(p0)
+R_s = (((1.+1.)*p0 )/(4*np.pi * g_cgs * rho0**2))**0.5 
+xi = r/R_s
+theta = (1.+((xi**2.)/3.))**(-0.5)
+P = p0 * theta**(n+1)"""
+
 r = r/100.
 r = r/1000.
 
 
-plt.plot(r,p,label='numerical')
+#plt.plot(r,p,label='numerical')
 plt.plot(r,P,label='exact')
 
 plt.xlabel("Radius (km)")
