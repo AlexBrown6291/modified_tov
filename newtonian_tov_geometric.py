@@ -78,27 +78,41 @@ t_span = (r_0,r_stop)
 t_eval = np.linspace(r_0,r_stop,1000)
 
 #p = np.logspace(25.,45.,num=10) #SI
-pressures = np.logspace(30,40,num=10)
+pressures = np.logspace(34,45,num=2)
+#pressures  = [10**34.,10**34. 
 pressures = pressures * G * c**(-4.)
 
 print pressures
+
 i = 0
 radii = []
 masses = []
 
+pressures = 10.**40.
+pressures = pressures * G * c**(-4.)
 
+nums = np.linspace(10.**5.,10.**8.,num=100)
+step_size = np.logspace(-4.,0.)
+print step_size
+step_size = np.flip(step_size) 
 
-for x in pressures:
+for x in range(0,len(step_size)-1):
+    print "val = ", step_size[x]
+    print "delta = : ", step_size[x+1]-step_size[x]
 
-    p_c = x
+for x in step_size:
+    #x = int(x)
+    print x
+    p_c = pressures
     rho_c = (p_c/K_bar)**(1./gamma)
 
-    p_0 = x/p_c
+    t_eval = np.linspace(r_0,r_stop,num=10.**5.)
+    p_0 = pressures/p_c
     y0 = [M_0,p_0]
     #y0 = [x]
     #print y0
 
-    soln = solve_ivp(TOV,t_span,y0,method='RK45', events=star_boundary, dense_output=True)
+    soln = solve_ivp(TOV,t_span,y0,  method='RK45', events=star_boundary, dense_output=True, max_step=x)
 
 
     r = soln.t
@@ -107,13 +121,14 @@ for x in pressures:
     #print soln
 
     M = M * c**2. / G
+    M = M/ M_sun
     #p = p * p_c
 
     radii.append(r[-1]/1000.)
     masses.append(M[-1])
     print p[0], r[-1], M[-1]
 
-    plt.plot(r,M)
+    """plt.plot(r,M)
     plt.xlabel("radius (m)")
     plt.ylabel("pressure")
     plt.savefig("plots/mass_profile_geometric_" + str(i) + ".pdf")
@@ -130,10 +145,12 @@ for x in pressures:
     #plt.ylabel("pressure")
     #plt.savefig("plots/pressure_profile_SI_" + str(i) + ".pdf")
     #plt.close()
-    i+=1
+    i+=1"""
 
 
-y0 = [0,1.]
+
+
+"""y0 = [0,1.]
 p_c = 10.**33. * G * c**(-4.)
 rho_c = (p_c/K_bar)**(1./gamma)
 soln = solve_ivp(TOV,t_span,y0,method='RK45', events=star_boundary, t_eval=t_eval, dense_output=True, rtol=10.**(-6.))
@@ -141,7 +158,7 @@ r = soln.t
 #print soln.t
 M = soln.y[0]
 p = soln.y[1]
-#print p
+#print p"""
 
 r = r/1000.
 
@@ -154,20 +171,25 @@ r = r/1000.
 
 #print masses 
 
-plt.plot(r,p, label='numerical')
+"""plt.plot(r,p, label='numerical')
 plt.legend()
 plt.xlabel("radius (km)")
 plt.ylabel("pressure")
 plt.savefig("plots/pressure_profile_dim.pdf")
-plt.close()
+plt.close()"""
+
+print r_stop
+print r_0
 
 
-
-plt.plot(radii,masses)
+plt.scatter(step_size,masses)
+plt.xscale('log')
+#plt.xlim(min(interval)*.5, max(interval)*2)
+#plt.ylim(1.42955,1.4296)
 plt.legend()
-plt.xlabel("radius (m)")
+plt.xlabel("Step size (m)")
 plt.ylabel("Mass (M_sun)")
-plt.savefig("plots/mass_radius_g.pdf")
+plt.savefig("plots/convergence_test.png")
 plt.close()
 
 """ps = np.logspace(22.,24,num=200) 
