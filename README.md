@@ -2,6 +2,7 @@
 
 
 List of files
+<pre>
 	eos_test.py			<td>Tests forward and backwards conversions of different unit changes \
         gr_tov_pp.py 	    	    	Solves relativistic TOV equations in geometric units and with dimensionless quanitities with a piecewise polytrope \
 	gr_tov_fromfile.py              Solves relativistic TOV equations in geometric units and with dimensionless quanitities with an EOS from a file \
@@ -13,3 +14,4 @@ List of files
 	newtonian_tov_nr.py 		Solves newtonian TOV using nonrelativistic polytrope \
 	newtonian_tov.pdf 		My Notes on the code devlopment along with results from the code \
 
+</pre>
