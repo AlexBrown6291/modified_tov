@@ -2,16 +2,9 @@
 
 
 List of files
-<table border="0">
-<tr>
-	<td>eos_test.py</td>			<td>Tests forward and backwards conversions of different unit changes </td> 
-        <td> gr_tov_pp.py </td>                     <td> Solves relativistic TOV equations in geometric units and with dimensionless quanitities with a piecewise polytrope </td> 
-        <td> gr_tov_fromfile.py</td>                <td> Solves relativistic TOV equations in geometric units and with dimensionless quanitities with an EOS from a file </td> 
-
-</table>
-
-
-
+	eos_test.py			<td>Tests forward and backwards conversions of different unit changes \
+        gr_tov_pp.py 	    	    	Solves relativistic TOV equations in geometric units and with dimensionless quanitities with a piecewise polytrope \
+	gr_tov_fromfile.py              Solves relativistic TOV equations in geometric units and with dimensionless quanitities with an EOS from a file \
         gr_tov_SI.py                    Solves relativistic TOV equations in SI units \
 	newtonian_tov_SI.py		Solves newtonian TOV equations in SI units \
 	newtonian_tov_cgs.py		Solves newtonian TOV equations in CGS units \
