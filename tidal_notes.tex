@@ -1,0 +1,390 @@
+\documentclass[11pt]{article}
+\usepackage{multirow}
+
+\usepackage{tabularx}
+\usepackage{graphicx}
+\usepackage{times}
+\usepackage{url}
+\usepackage{amsmath,amssymb}
+\usepackage{cite}
+\usepackage{empheq}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{parskip}
+\usepackage{verbatim}
+\usepackage{subcaption}
+\usepackage{hyperref}
+
+
+
+\newcommand*\widefbox[1]{\fbox{\hspace{2em}#1\hspace{2em}}}
+
+
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+  language=python,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
+
+\numberwithin{equation}{section}
+
+\usepackage{xcolor}
+\newcommand{\note}[1]{\textcolor{red}{#1}}
+
+\topmargin 0.0cm
+\oddsidemargin 0.2cm
+\textwidth 16cm 
+\textheight 21cm
+\footskip 1.0cm
+
+\title{Tidal Deformabilities} 
+
+\begin{document} 
+
+\maketitle 
+
+\section{Introduction}
+
+
+
+If we want to look at BNS in alternate theories of gravity using gravitational waves, we need to determine the tidal deformability.  By definition the tidal deformability (sometimes called tidal polarizability) is the deformation a neutron star undergoes when exposed to tidal forces. Tidal forces induce quadrapole moments in the star.  The deformation is described by the dimensionless Love number ($k_2$).  $k_2$ depends on the neutron star structure and hence the mass and EOS.
+
+The Love numbers were defined back in 1909 and 1912.  They were initially defined to characterize the elastic response of the earth. There are three ($h,k,l$ but only $k$ is of interest here).  $k_2$ is the cubical dilation (equal to the fractional change in volume).  When a massive body deforms a new gravitational potential is induced as the radius changes from $r$ to some $r \pm \delta r$.  In this case the initial potential  is($V(\theta,\phi)$) and the induced is ($k_{2}V(\theta,\phi)$) \cite{Agnew_2007}.  
+
+\section{Calculating GR Tidal Deformabilities}
+
+The tidal love number $k_2$ is a function of the compactness parameter ($\beta = GM/Rc^2$) and a quantity $y_r$ \cite{Moustakidis_2017, Hinderer_2008, Chirenti_2020}.  
+
+\begin{align*}
+k_{2} &=  \frac{8 \beta^{5}}{5}(1-2\beta)^{2} [2 - y_{R} + (y_{R} - 1) 2 \beta]  \\
+	& \times \; \bigg[ 2 \beta (6-3 y_{R} + 3 \beta(5 y_{R} -8)) \\
+	& + \; 4 \beta^{3} \big(13-11 y_{R} + \beta(3 y_{R} -2) + 2 \beta^{2} (1+y_{R}) \big) \\
+	& + \; 3 (1-\beta)^{2} [2-y_{R}+2 \beta(y_{r}-1)] \ln (1-2 \beta) \bigg] ^{-1}
+\end{align*}
+
+I cross checked this value in the three citations above.  They use slightly different groupings of variables, but I confirmed that they are mathematically equivalent and also used both equaions in the code.  I got the same value of $k_2$ for both.  
+
+\begin{lstlisting}
+k2 = ((8. * beta**5.)/5.) * (1. - 2. * beta)**2. * (2. - y_R + (y_R - 1.) * 2. * beta)  \
+        * ( 2. * beta * (6. - 3. * y_R + 3. * beta * (5. * y_R - 8.)) \
+        + 4. * beta**3. * (13. - 11. * y_R + beta * (3.* y_R - 2.) + 2. * beta**2. * (1. + y_R)) \
+        + 3. * (1. - 2. * beta)**2. * (2. - y_R + 2. * beta * (y_R - 1.)) * np.log(1. - 2. * beta)) **(-1.)
+
+
+k2 = (8./5.) * (1.-2.* beta)**2. * beta**5. *( 2. * beta * (y_R - 1.)- y_R +2. ) \
+        * (2 * beta * ( 4. * (y_R+1.)* beta**4. + (6. * y_R - 4.)* beta**3. + (26. - 22. * y_R)*beta**2.  \
+        + 3. * (5. * y_R-8.)* beta - 3.* y_R + 6.)+ 3*(1. - 2. * beta)**2. \
+        *(2. * beta* (y_R - 1.) - y_R + 2.) * np.log(1. - 2. * beta))**(-1.) 
+\end{lstlisting}
+
+The quantity $y_r$ comes from a differential equation, in \cite{Moustakidis_2017}  .  Where the functionals $F(r)$ and $Q(r)$ depend on energy density ($\mathcal{E}$), pressure ($P$), and mass (M).
+
+\begin{equation} \label{diffeq}
+r \frac{dy(r)}{dr} + y^{2}(r) + y(r)F(r) + r^{2} Q(r) = 0, \;\;\;\; y(0)=2 \;\;\;\; y_{R} \equiv y(R)
+\end{equation}
+
+\begin{equation} \label{F}
+F(r) = \bigg[ 1-\frac{4 \pi r^{2} G }{c^{4}} (\mathcal{E}(r)-P(r))  \bigg] \bigg( 1-\frac{2 M(r) G}{r c^{2}}  \bigg)^{-1}
+\end{equation}
+
+\begin{align} \label{eq:r2Q}
+r^{2} Q(r) &= \frac{4 \pi r^{2} G}{c^{4}} \bigg[ 5 \mathcal{E}(r) + 9 P(r) + \frac{\mathcal{E}(r) + P(r)}{dP(r)/d\mathcal{E}(r)}   \bigg] \bigg(  1 - \frac{2 M(r) G}{r c^{2}} \bigg) ^{-1}  \\
+& - \;\; 6 \bigg( 1- \frac{2 M(r) G}{r c^{2}}  \bigg)^{-1}. \nonumber  \\
+& - \;\; \frac{4 M^{2}(r) G^{2}}{r^{2}c^{4}} \bigg( 1 + \frac{4 \pi P(r)}{M(r) c^{2}}  \bigg)^{2} \bigg( 1 - \frac{2 M(r) G}{r c^{2}} \bigg)^{-2}. \nonumber
+\end{align}
+
+The code for these three equations is as follows:
+
+\begin{lstlisting}
+temp1 = (2. * M * G)/ (r * c**2.)
+
+F = (1. - ((4. * pi * G * r**2.)/(c**4.)) * (E - p) ) * (1. - temp1)**(-1.)
+
+r2Q = ((4. * pi * G * r**2.)/(c**4.)) * (5. * E + 9. * p + ((E + p)/(dpde))) * (1. - temp1)**(-1.) \
+         -  6. * ( 1.- temp1)**(-1.)    \
+         -  temp1**2.  * (1. + ((4. * pi * p * r**3.)/(M  * c**2.)))**2. * (1. - temp1)**(-2.)
+
+dydr = - (1./r) *  (yval**2. + yval * F + r2Q ) 
+
+
+\end{lstlisting}
+
+But where do these equations come from?
+
+The quantity here, $y_R$ is a function of $H$ which are the even-parity metric perturbation ($H=H_0=H_2$). Thorne and Campolattaro have shown that odd parity perturbations are metric only fluctuations (they do not affect pressure and density of the object). These perturbations satisfy the second order differential equation.
+
+\begin{equation}
+H'' + C_{1} H' + C_{0} = 0
+\end{equation}
+
+\begin{equation}
+C_1 = \frac{2}{r} + \frac{1}{2} (\nu' -\lambda') = \frac{2}{r} + e^{\lambda} \bigg[ \frac{2m}{r^2} + 4 \pi r (p - e) \bigg]
+\end{equation}\
+
+\begin{align}
+C_0 & = e^{\lambda} \bigg[ - \frac{\ell (\ell+ 1)}{r^2} + 4 \pi (e + p) \frac{de}{dp} + 4 \pi (e + p)    \bigg] + v'' + (v')^2 + \frac{1}{2 r} (2-r \nu ')(3 \nu' + \lambda') \\
+	& = e^{\lambda}  \bigg[ \frac{\ell (\ell+ 1)}{r^2} + 4 \pi (e + p) \frac{de}{dp}  + 4 \pi (5e + 9p)  \bigg]  - (\nu')^{2} \nonumber 
+\end{align}
+
+$\lambda$ and $\nu$ come from the line elment $ds^2 = -e^{\nu(r)} dt^2 + e^{\lambda (r)} dr^2 + r^2 (d \theta^{2} + sin^{2} \theta d \phi^{2})$
+
+$y_{r}$ is the logarithmic derivative of the metric function $H$.
+
+\begin{equation}
+y_r = \frac{r H'(r)}{H(r)}
+\end{equation}
+
+\begin{comment}
+
+According to \cite{Chirenti_2020}, this gives the following equation for $y_r$
+
+\begin{equation}
+r \frac{dy}{dr} + y (y-1) + r C_{1} h + r^{2} C_{0} = 0
+\end{equation}
+
+You can rearrange this so that it's in the same form as equation \ref{diffeq} 
+
+\begin{equation}
+r \frac{dy}{dr} + y^2 + r \Big(C_{1} - \frac{1}{r} \Big) h + r^{2} C_{0} = 0
+\end{equation}
+
+In this case, for the equations to agree, you need $ r \big(C_{1} - 1/r \big) = F(r)$ and $r^2 C_{0} = r^{2} Q$ 
+
+Assuming a Schwarzschild metric
+
+\textbf{\textcolor{blue}{The $e^{nu}$ below is incorrect there is in fact a pressure term.}}
+
+\begin{equation} \label{eq:metric_components}
+e^{\lambda} = \bigg(1- \frac{2 G M}{r c^{2}} \bigg)^{-1} \, ,  \;\;\;\;  e^{\nu} = \bigg(1- \frac{2 G M}{r c^{2}} \bigg)
+\end{equation}
+
+(using $G=c=1$ units)
+
+\begin{equation}
+r \big(C_{1} - 1/r \big) = \Big(1- \frac{2 G M}{r c^{2}} \Big)^{-1}  \big [1 - 4 \pi r (e - p)) \big] = F(r)
+\end{equation}
+
+However, for $r^2 C_{0} = r^{2} Q$ I get an issue.  
+
+
+First I want to get $\nu'$.  From eq \label{eq:metric_components}, we have $\nu = \ln(1-2M/r)$
+
+\begin{equation}
+\nu' = \frac{d }{dr}\bigg(\ln \Big(1-\frac{2M}{r} \Big) \bigg) = \frac{2M}{r (2M-r)}
+\end{equation}
+
+Moving on to $r^2 C_{0}$
+
+\begin{align}
+r^2 C_0 = & 4 \pi r^{2}\bigg[ 5 \mathcal{E}(r) + 9 P(r) + \frac{\mathcal{E}(r) + P(r)}{dP(r)/d\mathcal{E}(r)}   \bigg] \bigg(  1 - \frac{2 M(r)}{r} \bigg) ^{-1}  \\
+& - \;\; \ell (\ell + 1) \bigg( 1- \frac{2 M(r)}{r }  \bigg)^{-1}. \nonumber  \\
+& - \frac{4 M^{2}}{(2M-r)^2}
+\end{align}
+
+This equation is not the same as $r^{2} Q(r)$.  The final term differs. I am not sure where the pressure term in the equation from \cite{Moustakidis_2017} comes from.
+
+\textbf{[WITH THAT FIGURED OUT]} \\
+\end{comment}
+
+
+I need two more (small) equations.
+
+First, my code is written in terms of mass density and I need to multiply by $c^2$ to get the energy density which appears in the equation above.  
+\begin{equation}
+\mathcal{E}(r) = \rho (r) c^{2}
+\end{equation}
+
+Secondly, all of the other derivatives are in terms of $r$ and for the functional $Q(r)$ I need $dP(r)/d\mathcal{E}(r)$.  This can be obtained from the equation of state which gives the pressure as a function density.  (Because energy density is related to the mass density as described above, the derivatives of the two are also related also by a factor of $c^{2}$
+
+
+In order to use Equation 2.1 in the code, it needs to be put in the following form:
+
+
+\begin{equation}
+\frac{dy(r)}{dr} = - \frac{1}{r} \bigg( y^{2}(r) + y(r) F(r) + r^{2} Q(r)  \bigg)
+\end{equation}
+
+The object of interest for gravitational waves is the dimensionless tidal deformability.  This is related to $k_2$ by the following:
+
+\begin{equation}
+\Lambda = \frac{2}{3} k_{2} \beta^{-5}
+\end{equation}
+
+
+Given that the equations are written in physical units, I will start with the SI code.  In paper \cite{Hinderer_2008} they calculate the tidal deformabilitis of polytropes.  This gives me two options: polytropic equation of state or eos from Ingo.  On the surface, the polytropes are easier, but locating the polytropic index is tricky.  
+
+
+
+
+
+\subsection{Polytropes}
+
+The paper \cite{Hinderer_2008}, as mentioned, calculates the Love numbers of polytropes.  The results are given in terms of compactness.  Ideally, I would use the polytrope equation of state and compare to her results to ensure my code is correct.  However, I'm not sure what K value she uses in the polytrope.  I can't tell if the relation is independent of K value (but it seems to be).  So I will look at the compactnesses generated using the K values I have already in the code.  Where compactness is 
+
+\begin{equation}
+C = \frac{G M}{c^{2} R}
+\end{equation}
+
+The paper looks at values of $n$ between .3 and 1.2 ($1.83 < \gamma < 4.33 $). I start with $\gamma = 3$ ($n=.5$).  I calculate the relativistic K value using the piecewise polytrope from \href{https://www.ictp-saifr.org/schoolgr/Lecture2Creighton.pdf}{this lecture}.  
+
+This gives me a range of compactnesses from ~ $5 \times 10 ^{-4}$ to 0.38.
+
+I need to have the derivative of pressure with respect to energy density and since I am using the polytrope, I have an exact equation for the derivative.  (This only works for polytropes, but it will allow me to check that my equations are working and then I can turn to how to properly define the derivative.).  The values of $k_2$ seem reasonable.  I have \\ 
+$(C = 0.002, k_2 = 0.449)$  vs  $(C = 10^{-5}, k_2 = 0.449)$ \\
+$(C = 0.14, k_2 = 0.169)$  vs  $(C = 0.15, k_2 = 0.173)$ \\
+$(C = 0.20, k_2 = 0.096)$  vs  $(C = 0.20, k_2 = 0.095)$ \\
+$(C = 0.26, k_2 = 0.047)$  vs  $(C = 0.15, k_2 = 0.057)$ \\ 
+
+The next step then
+
+
+
+
+\subsection{Chiral EFT} 
+
+
+The actual equations of state that I use are the Chiral- EFT equations provided by Ingo.  These are in tables of pressure and energy density.  I already set up the code to read in an equation of state from a file and use it in my TOV notes.   Essentially its broken down into 
+
+\begin{enumerate}
+\item read in file
+\item Convert values from mev to SI units
+\item define eos function by interpolating 
+\end{enumerate}
+
+The Code:
+
+\begin{lstlisting}
+#-------------------------------------------------
+#  EOS FROM FILE
+#-------------------------------------------------
+
+from_mev = 1.602176565 * 10.**(32)  #This is to SI, to cgs its 10^33 
+
+# READ IN THE EOS 
+
+data = np.loadtxt("EOS_files/EOS_nsat_ind1.dat",skiprows=0,delimiter='\t')
+data = data.transpose()
+print np.shape(data)
+
+eos_ps = data[1]      
+eos_ps = eos_ps * from_mev      
+eos_rhos = data[2]    
+eos_rhos = eos_rhos * from_mev          #This is energy density
+
+
+def EOS_fromfile(p):
+    rho = np.interp(p,eos_ps,eos_rhos)
+    return rho
+\end{lstlisting}
+
+
+Looking at the equation for the functional $Q(r)$ you can see that there is a $dP(r)/d\mathcal{E}(r)$ term.  Since the equation i'm using does not have a functional form that I can use to calculate the derivative (Like I did with the polynomials), I need another way to do it.  
+
+Recall the definition of the derivative:
+
+\begin{equation}
+\frac{df}{dx} = \lim_{h \to 0} \frac{f(x+h)-f(x)}{h}
+\end{equation}
+
+In this case we have $f(x) = P(\mathcal{E})$.  It's not practical to find the limit of h, instead I choose a sufficiently small h.
+
+I want to define a function that takes $P$ as an input.  In this case, I am started with $(f(x+h)-f(x)$ instead of $x$ or $h$. Since I want the derivative at P, instead of taking P as one of the end points (either $f(x+h)$ or $f(x)$) I choose a small value $\delta$ and set $f(x+h) = P + \delta$ and $f(x) = P - \delta$.  The next step is to calculate $h$.  I do this using the EOS function to get $rho$ at $P+\delta$ and $P-\delta$.  Subtracting these two values gives h.  This gives:
+
+\begin{equation}
+\frac{dP}{d\mathcal{E}} = \frac{(P+\delta) - (P- \delta)}{\mathcal{E}(P+\delta)-\mathcal{E}(P-\delta)}  = \frac{2 \delta}{\mathcal{E}(P+\delta)-\mathcal{E}(P-\delta)}
+\end{equation}
+
+Choosing the value of $\delta$ is important because if it is too large then there will be errors introduced to the calculation.  I fixed this value by trial and error.  Since $P$ (SI) is n the order of $10^{30}$,  I started with$\delta = 1$ and then rapidly increased because the difference was too small for the equation to work.  I ended up with $\delta = 10^{20}$.  This seems very large, but it is $10^{-10}$ times smaller than $P$.  I  tested this on the polynomial equation of state and compared it to the explicit derivation.  With this value of $delta$, I got a percent error of $7 \times 10^{-8}$.   Since I want the code to work for various values of $P$ and to continue to work in geometric units (where $P \approx  10^{-10}$), I define $\delta$ relative to $P$ instead of as an absolute value.  Thus, $\delta = 10^{-10} \times P$.
+
+The code for this is:
+
+\begin{lstlisting}
+def deriv_fromfile(p):
+    p2 = p + p*10**-10. 
+    p1 = p - p*10**-10. 
+    rho2 = EOS_fromfile(p2)
+    rho1 = EOS_fromfile(p1)
+    h = rho2-rho1
+
+    deriv = 2.*p*10**(-10.)/h
+    if p < 0:
+        deriv = 0
+    return deriv
+\end{lstlisting}
+
+Note: the integrator drops into negative values of pressure when it's in the last few steps.  Since the EOS is only defined for $P>0$, it doesnt make sense t find the derivative of the EOS when $P<0$.  So, I set the derivative = 0.  (This value shouldnt matter because the integrator outputs only results for $P>0$.
+
+\subsubsection{Problems}
+
+The results from this code do not agree with the know solutions for Ingo's EOS.  I know that the error is in the differential equation for $y_r$ because I have cross checked $k_2$.  Ingo provided me with tables and plots from when he first developed his own code.  It shows $F(r)$, $r^{2} Q$, and $y_r$ for the SLy equation of state.  It even breaks $r^2Q$ down into the three terms.  
+
+\begin{equation}
+\frac{4 \pi r^{2} G}{c^{4}} \bigg[ 5 \mathcal{E}(r) + 9 P(r) + \frac{\mathcal{E}(r) + P(r)}{dP(r)/d\mathcal{E}(r)}   \bigg] \bigg(  1 - \frac{2 M(r) G}{r c^{2}} \bigg) ^{-1} 
+\end{equation}
+
+\begin{equation}
+6 \bigg( 1- \frac{2 M(r) G}{r c^{2}}  \bigg)^{-1}
+\end{equation}
+
+\begin{equation}
+\frac{4 M^{2}(r) G^{2}}{r^{2}c^{4}} \bigg( 1 + \frac{4 \pi P(r)}{M(r) c^{2}}  \bigg)^{2} \bigg( 1 - \frac{2 M(r) G}{r c^{2}} \bigg)^{-2}
+\end{equation}
+
+\textbf{Note} I will attach the page of plots at the end for reference.  
+
+Based on these plots, I am guessing that the error is in the first term... the most likely culprit is the derivative term.
+
+To do a 1:1 comparison. I need to use the FPS and SLy equations of state.  I found the tables for these online.  The tables are quite sparse, but the website also provides a code to calculate the eos.  I downloaded the .c file.  The current code is designed to be interactive.  I'm going to change it so that i auto generates a table.  This is done by changing th main() function from the code.  This portion f the code DOES NOT do any calculations, so I am not in danger of messing up the EOS.  Also these tables generate pressure and density in CGS units, so the code to read in files will need to be adjusted slightly.  
+
+
+
+
+
+\subsection{Geometric Units} 
+
+To reduce numerical errors, the code should be done in geometric units with dimensionless variables.  For this to work, I need to change the diff eq for $y_R$.  This is done by adjusting the equations  for the functionals $F(r)$ and $Q(r)$, since there are no factors of $G$ or $c$ elsewhere in the equation. \textbf{I need to figure out the units of $y_R$ and see if the initial value needs to be scaled somehow}..  I also want to introduce the dimensionless variables for $P$ and $\rho$.  The are defined as $P = \bar{P} P_c$ and $\mathcal{E} = \rho = \bar{\rho} \rho_{c} = \bar{\mathcal{E}} \mathcal{E}_{c}$
+
+\begin{equation} 
+F(r) = \bigg[ 1- 4 \pi r^{2} (\mathcal{E}_{c}\bar{\mathcal{E}}(r)-P_{c}\bar{P}(r))  \bigg] \bigg( 1-\frac{2 M(r) }{r}  \bigg)^{-1}
+\end{equation}
+
+\begin{align} 
+r^{2} Q(r) &= 4 \pi r^{2} \bigg[ 5 \mathcal{E}_{c}\bar{\mathcal{E}}(r)+ 9 P_{c}\bar{P}(r) + \frac{\mathcal{E}_{c}\bar{\mathcal{E}}(r) + P_{c}\bar{P}(r)}{dP(r)/d\mathcal{E}(r)}   \bigg] \bigg(  1 - \frac{2 M(r)}{r} \bigg) ^{-1} \\
+& - \;\; 6 \bigg( 1- \frac{2 M(r) }{r }  \bigg)^{-1} \nonumber \\	
+& - \;\; \frac{4 M^{2}(r)}{r^{2}} \bigg( 1 + \frac{4 \pi P_{c} \bar{P}(r)}{M(r)}  \bigg)^{2} \bigg( 1 - \frac{2 M(r)}{r} \bigg)^{-2} \nonumber
+\end{align}
+
+
+
+
+
+
+
+\section{Tidal Deformabilities and Gravitational Waves}
+
+\clearpage
+
+\section{SLY Plots}
+
+\includegraphics[width=\textwidth]{sly_compare/function_comparison} \\
+
+\bibliography{Alternate_Theories}
+\bibliographystyle{plain}
+
+\end{document}

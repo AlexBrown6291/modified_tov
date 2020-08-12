@@ -57,7 +57,9 @@ def deriv(p):
     dpde = K_r * c**(-2.) * gamma_2 * rho**(gamma_2 - 1.)
     return dpde
 
-#def deriv_E(E)
+def deriv_E(E):
+    dpde = K_r * c**(-2.*gamma_2) * gamma_2 * E**(gamma_2 - 1.)
+    return dpde
 
 def EOS_pp(p):
     rho = 0.
@@ -85,7 +87,7 @@ def TOV(r,y):
 
     temp2 = 4. * np.pi * G * r**3. * p * c**(-2.) + G * M 
 
-    rho = EOS_pp(p)
+    rho = EOS(p)
     #print p
     dMdr = 4. * np.pi * rho * r**2.
     dpdr = - (rho + p * c**(-2.)) * temp2 / temp
@@ -95,7 +97,7 @@ def TOV(r,y):
     #print "dpdr = ", dpdr
     #print "dMdr = ", dMdr
     #print "dphidr = ",dphidr
-    print r
+    #print r
 
     if p < 0:
         dMdr = 0
@@ -129,8 +131,11 @@ def TOV_tidal(r,y):
     print "c^2= ", c**2."""
 
     temp1 = (2. * M * G)/ (r * c**2.)
-    E = p * c**2.                           #energy density
+    E = rho * c**2.                           #energy density
     dpde = deriv(p)
+    #print "dpde = ", dpde
+    #dpde = deriv_E(E)
+    #print "dpde = ", dpde
     #print dpde
 
     """print "(2. * M * G)/ (r * c**2.) = ", temp1
@@ -139,12 +144,12 @@ def TOV_tidal(r,y):
 
 
     F = (1. - ((4 * pi * G * r**2.)/(c**4.)) * (E - p) ) * (1. - temp1)**(-1.)
-    r2Q = ((4 * pi * G * r**2.)/(c**4.)) * (5. * E + 9. * p + ((E + p)/(dpde))) * (1. - temp1)**(-1.) # - 6. *( 1-temp1)**(-1.) -  temp1**2.  * (1. + ((4. * pi * p * r**3.)/(M  * c**2.)))**2. * (1. - temp1)**(-2.)
+    r2Q = ((4 * pi * G * r**2.)/(c**4.)) * (5. * E + 9. * p + ((E + p)/(dpde))) * (1. - temp1)**(-1.) - 6. *( 1-temp1)**(-1.) -  temp1**2.  * (1. + ((4. * pi * p * r**3.)/(M  * c**2.)))**2. * (1. - temp1)**(-2.)
 
     dydr = - (1./r) *  (yval**2. + yval * F + r2Q ) # - (1./r) *
     #print "dydr = ", dydr
     #dydr = 100
-    print "r = ", r
+    #print "r = ", r
 
     if M == 0:
         dydr = 0
@@ -162,10 +167,10 @@ def TOV_tidal(r,y):
         dphidr = 0
         dydr = 0
 
-    print "dpdr = ", dpdr
+    """print "dpdr = ", dpdr
     print "dMdr = ", dMdr
     print "dphidr = ",dphidr
-    print "dydr =", dydr
+    print "dydr =", dydr"""
 
     return [dMdr,dpdr,dphidr,dydr]
 
@@ -190,6 +195,8 @@ radii_tidal = []
 radii = []
 masses = []
 masses_tidal = []
+lambdas = []
+ks = []
 
 for x in pressures:
     #--------------------------------------------------
@@ -204,18 +211,19 @@ for x in pressures:
     print "rho = ", EOS(x)
 
     #soln = solve_ivp(TOV_tidal,t_span,y0,method='RK45', events=star_boundary, dense_output=True)
-    soln = solve_ivp(TOV_tidal,t_span,y0,method='BDF', events=star_boundary, dense_output=True)
+    soln = solve_ivp(TOV_tidal,t_span,y0,method='RK45', events=star_boundary, dense_output=True)
 
     r = soln.t
     M = soln.y[0]
     p = soln.y[1]
     phi = soln.y[2]
-    print soln
+    y = soln.y[3]
+    #print soln
 
     radii_tidal.append(r[-1])
     masses_tidal.append(M[-1])
     
-    """y0 = [M_0,x,phi_0]
+    y0 = [M_0,x,phi_0]
     #y0 = [x]
     print y0
     print "rho = ", EOS(x)
@@ -229,19 +237,34 @@ for x in pressures:
     #print soln
 
     radii.append(r[-1])
-    masses.append(M[-1])"""
+    masses.append(M[-1])
 
     print p[0], r[-1], M[-1]/M_sun
-    print len(M)
+    #print len(M)
 
     #------------------------------------------------
     #Calculate the tidal love number
     #------------------------------------------------
+    y_R = y[-1]
+
+    beta = (G * M[-1] )/( r[-1] * c**2.)    #compactness
+
+    k2 = ((8. * beta**5.)/5.) * (1. - 2. * beta)**2. * (2. - y_R + (y_R - 1.) * 2. * beta)  \
+        * ( 2. * beta * (6. - 3. * y_R + 3. * beta * (5. * y_R - 8.)) \
+        + 4. * beta**3. * (13. - 11. * y_R + beta * (3.* y_R - 2.) + 2. * beta**2. * (1. + y_R)) \
+        + 3. * (1. - 2. * beta)**2. * (2. - y_R + 2. * beta * (y_R - 1.)) * np.log(1. - 2. * beta)) **(-1.)
+
+    
+    tidal = (2. * r[-1]**5. * k2)/ (3. * G)
+    l_dim = 2. * k2 * beta**(-5.) / 3
+    ks.append(k2)
+    lambdas.append(l_dim)
+
 
 
     """plt.plot(r,M)
     plt.xlabel("radius (m)")
-    plt.ylabel("pressure")
+    plt.ylabel("pressure")()
     plt.savefig("plots/GR/mass_profile_SI_" + str(i) + ".pdf")
     plt.close()
 
@@ -284,14 +307,14 @@ print radii
 print "Compactness:"
 
 for x in range(0,len(masses_tidal)):
-    print "Tidal calc", masses_tidal[x] * G / (c **2. * radii_tidal[x])
+    print "Compactness = ", masses_tidal[x] * G / (c **2. * radii_tidal[x]), "\t lambda = ", lambdas[x], "\t k2 = ", ks[x]
     masses_tidal[x] = masses_tidal[x]/M_sun
     #print "W/o Tidal calc", masses[x] * G / (c **2. * radii[x])
     #masses[x] = masses[x]/M_sun
 
 #radii = radii * 1000.
 #plt.scatter(radii,masses,c=pressures, cmap='inferno',norm=matplotlib.colors.LogNorm())
-plt.scatter(radii,masses, color = 'b')
+#plt.scatter(radii,masses, color = 'b')
 plt.scatter(radii_tidal,masses_tidal,color = 'r')
 plt.legend()
 plt.ylim(0.5,2.5)

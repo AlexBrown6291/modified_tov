@@ -1,6 +1,8 @@
 import numpy as np
 from scipy.integrate import solve_ivp
 from scipy.integrate import RK45
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.colors
 import matplotlib.pyplot as plt
 from scipy.optimize import fsolve
@@ -18,21 +20,26 @@ from_mev = 1.602176565 * 10.**(32)  #This is to SI, to cgs its 10^33
 # READ IN THE EOS 
 
 
-data = np.loadtxt("EOS_files/EOS_nsat_ind447.dat",skiprows=0,delimiter='\t')
+data = np.loadtxt("EOS_files/EOS_nsat_ind1.dat",skiprows=0,delimiter='\t')
 data = data.transpose()
-print np.shape(data)
+#print np.shape(data)
 
 
 
 eos_ps = data[1]      
 eos_ps = eos_ps * from_mev                  #second column is pressure
-print max(eos_ps)
+#print max(eos_ps)
 eos_pg = eos_ps * G * c**(-4.)              #conversion to dimensionless quantities
+print min(eos_ps)
+print max(eos_ps)
+print len(eos_ps)
 
 eos_rhos = data[2]    
 eos_rhos = eos_rhos * from_mev              #Third column is denisty
 eos_rhog = eos_rhos * G * c**(-4.)          #Use G * c**-4 because this is energy density
-
+print min(eos_rhos/c**2.)
+print max(eos_rhos/c**2.)
+print len(eos_rhos)
 
 
 
@@ -89,13 +96,13 @@ t_span = (r_0,r_stop)
 t_eval = np.linspace(r_0,r_stop,1000)
 
 p_low = 1. * from_mev                           #Ingo says to start with ~ 1MeV cm^-3
-print p_low
+#print p_low
 
-pressures = np.logspace(32,35,num=200)           #p_max in the file from Ingo is 2.4 x 10^35, so max needs to be less than that 
+pressures = np.logspace(32,35,num=20)           #p_max in the file from Ingo is 2.4 x 10^35, so max needs to be less than that 
 #pressures  = [10**34.,10**34. 
 pressures = pressures * G * c**(-4.)
 
-print pressures
+#print pressures
 
 
 radii = []
@@ -163,12 +170,13 @@ for x in pressures:
     i+=1"""
 
 
-f= open("EOS_files/mass_radius_447.dat",'w+')
-f.write("Mass (M_sun)) \t Radius (km) \n")
+#f= open("EOS_files/mass_radius_447.dat",'w+')
+#f.write("Mass (M_sun)) \t Radius (km) \n")
 for x in range(0,len(radii)):
     if radii[x] < 20.0:
         temp = str(masses[x]) + "\t" + str(radii[x]) + "\n"
-        f.write(temp)
+        #f.write(temp)
+        print temp
 
 r = r/1000.
 
@@ -181,25 +189,26 @@ r = r/1000.
 
 #print masses 
 
-plt.plot(r,p, label='numerical')
+"""plt.plot(r,p, label='numerical')
 plt.legend()
 plt.xlabel("radius (km)")
 plt.ylabel("pressure")
 plt.savefig("plots/GR/pressure_profile_dim.pdf")
-plt.close()
+plt.close()"""
 
-print np.shape(radii)
-print np.shape(masses)
+#print np.shape(radii)
+#print np.shape(masses)
 
 plt.scatter(radii,masses,c=pressures, cmap='inferno',norm=matplotlib.colors.LogNorm())
 plt.legend()
 plt.xlabel(r'radius (m)')
 plt.ylabel(r'Mass (M$_{\odot}$)')
-plt.savefig("plots/GR/mass_radius_chiraleft_447.pdf")
-plt.close()
+#plt.savefig("plots/GR/mass_radius_chiraleft_447.pdf")
+#plt.close()
+plt.show()
 
-print r_stop
-print r_0
+#print r_stop
+#print r_0
 
 """
 plt.scatter(step_size,masses)
