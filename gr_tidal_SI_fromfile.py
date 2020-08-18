@@ -11,46 +11,8 @@ from numpy import diff
 
 
 #Constants
-M_sun = 1.98 * 10.**(30.) #SI kg
-from_mev = 1.602176565 * 10.**(32)  #This is to SI, to cgs its 10^33 
-
-#--------------------------------------------------------------
-#  POLYTROPE EOS
-#--------------------------------------------------------------
-
 M_sun = 1.98892 * 10.**(30.) #SI kg
-#n = 1.
-n = 3.
-gamma = (n+1.)/n
-#print gamma
-
-m_e = 9.1094 * 10.**(-31.) # kg
-m_h = 1.6749 * 10.**(-27.) # kg
-
-K = ((hbar * c) /(12*np.pi**2.)) * ((3*np.pi**2.)/(m_h))**(4./3.)  #from sanjay's paper
-#print K
-K = K * 0.5**(4./3.)
-
-#from princeton lecture
-K = (h * c)/ 8. 
-K = K * (3/np.pi)**(1./3.)
-K = K * (1./(m_h))**(4./3.)
-#print K
-K = K * 0.5**(4./3.)
-
-#print K
-K_nr = (3.0*pi**2)**(2.0/3.0) * hbar**2. / (5.0*m_h**(8.0/3.0))
-
-gamma_1 = 5./3.     #non-relativistic degenercy at low densities
-gamma_2 = 3.      #relativistic degenercy at high densities
-
-
-rho_t = 5. * 10.**17.   #Transition Density
-p_t = K_nr * rho_t ** gamma_1       #Transition pressure
-K_r = p_t / rho_t ** gamma_2     #Relativistic K, calculated using continuity
-
-
-print "K = ", K_r
+from_mev = 1.602176565 * 10.**(32)  #This is to SI, to cgs its 10^33 
 
 
 #-------------------------------------------------
@@ -146,13 +108,9 @@ def deriv_fromfile(p):
 
     p2 = p + p*10**-10. 
     p1 = p - p*10**-10. 
-    temp_p = math.floor(math.log(p*10**-10., 10))
     E2 = EOS_fromfile(p2) * c**2.
     E1 = EOS_fromfile(p1) * c**2. 
     h = E2-E1
-    temp_E = math.floor(math.log(h, 10))
-    scale = temp_p/temp_E
-    h_scale = h * scale
     """print "ps = ", p2, p1
     print "rhos = ", rho2, rho1
     print "diff p = ", p2-p1
@@ -160,38 +118,12 @@ def deriv_fromfile(p):
     #print h
     #print 2.*p*10**(-10.)
 
-    deriv = 2.*p*10**(-10.)/h_scale
-    deriv = deriv * scale 
+    deriv = 2.*p*10**(-10.)/h
     #print "deriv w/ scale= ", deriv
     #print "deriv w/o scale= ", 2.*p*10**(-10.)/h
         
     return deriv
 
-
-def deriv(p):
-    #Polytrope derivative as a function of pressure
-    rho = EOS(p)
-    dpde = K_r * c**(-2.) * gamma_2 * rho**(gamma_2 - 1.)
-    return dpde
-
-def deriv_E(E):
-    #Polyutrope derivative as a function of energy density
-    dpde = K_r * c**(-2.*gamma_2) * gamma_2 * E**(gamma_2 - 1.)
-    return dpde
-
-def EOS_pp(p):
-    rho = 0.
-    #print "p = ", p
-    if p < p_t:
-        rho = (p/K_nr)**(1./gamma_1)
-    else:
-        rho = (p/K_r)**(1./gamma_2)
-    #print "rho = ", rho
-    return rho
-
-def EOS(p):
-    rho = (p/K_r)**(1./gamma_2)
-    return rho
 
 def TOV(r,y):
     M = y[0]
@@ -259,26 +191,14 @@ def TOV_tidal(r,y):
     temp1 = (2. * M * G)/ (r * c**2.)
     dpde = deriv_fromfile(p)
 
-    #E = rho * c**2.                           #energy density
-    #dpde = deriv(p)
-    #print "dpde = ", dpde
-    #dpde = deriv_E(E)
-    #print "dpde = ", dpde
-    #print dpde
 
     F = (1. - ((4. * pi * G * r**2.)/(c**4.)) * (E - p) ) * (1. - temp1)**(-1.)
-
-    #from the paper Ingo sent me
-    #r2Q_1 = ((4. * pi * r**2. * G )/ c**4.) * ( 5. * E + 9. * p + (E+p)/(dpde))*(1.-temp1)**(-1.) # The error is here... it must come from the derivative
-    #r2Q_2 = - 6. * (1. - temp1)**(-1.)
-    #r2Q_3 = - temp1**2.  * (1. + ((4. * pi * r**3. * p)/(M * c**2.)))**2. * (1. - temp1)**(-2.)
 
 
     r2Q = ((4. * pi * G * r**2.)/(c**4.)) * (5. * E + 9. * p + ((E + p)/(dpde))) * (1. - temp1)**(-1.) \
          -  6. * ( 1.- temp1)**(-1.)    \
          -  temp1**2.  * (1. + ((4. * pi * p * r**3.)/(M  * c**2.)))**2. * (1. - temp1)**(-2.)
     #print "r2Q = ", r2Q
-
 
 
     dydr = - (1./r) *  (yval**2. + yval * F + r2Q ) 
@@ -386,19 +306,6 @@ for x in steps:
 
     radii_tidal.append(r[-1])
     masses_tidal.append(m[-1])
-    
-    """y0 = [M_0,x,phi_0]
-    #y0 = [x]
-    print y0
-    print "rho = ", EOS_fromfile(x)
-
-    soln = solve_ivp(TOV, t_span, y0, method='RK45', events=star_boundary, dense_output=True, max_step=step_size)
-
-    r = soln.t
-    M = soln.y[0]
-    p = soln.y[1]
-    phi = soln.y[2]
-    #print soln"""
 
     radii.append(r[-1])
     masses.append(m[-1])
@@ -422,12 +329,6 @@ for x in steps:
         + 3. * (1. - 2. * beta)**2. * (2. - y_R + 2. * beta * (y_R - 1.)) * np.log(1. - 2. * beta)) **(-1.)
 
     #print "k_2 (one) ", k2
-
-
-    """k2 = (8./5.) * (1.-2.* beta)**2. * beta**5. *( 2. * beta * (y_R - 1.)- y_R +2. ) \
-        * (2 * beta * ( 4. * (y_R+1.)* beta**4. + (6. * y_R - 4.)* beta**3. + (26. - 22. * y_R)*beta**2.  \
-        + 3. * (5. * y_R-8.)* beta - 3.* y_R + 6.)+ 3*(1. - 2. * beta)**2. \
-        *(2. * beta* (y_R - 1.) - y_R + 2.) * np.log(1. - 2. * beta))**(-1.) """
 
 
 
