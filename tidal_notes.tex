@@ -350,11 +350,127 @@ The results from this code do not agree with the know solutions for Ingo's EOS. 
 
 Based on these plots, I am guessing that the error is in the first term... the most likely culprit is the derivative term.
 
-To do a 1:1 comparison. I need to use the FPS and SLy equations of state.  I found the tables for these online.  The tables are quite sparse, but the website also provides a code to calculate the eos.  I downloaded the .c file.  The current code is designed to be interactive.  I'm going to change it so that i auto generates a table.  This is done by changing th main() function from the code.  This portion f the code DOES NOT do any calculations, so I am not in danger of messing up the EOS.  Also these tables generate pressure and density in CGS units, so the code to read in files will need to be adjusted slightly.  
+To do a 1:1 comparison. I need to use the FPS and SLy equations of state.  I found the tables for these online.  The tables are quite sparse, but the website also provides a code to calculate the eos.  I downloaded the .c file.  The current code is designed to be interactive.  I'm going to change it so that it prints the data to a file instead of a screen.  This is done by changing the main() function from the code.  This portion f the code DOES NOT do any calculations, so I am not in danger of messing up the EOS.  I generated a list of pressures similar to those in my chiral-eft files using a python script to make logarithmically spaced points then put those points through the code.  
+
+Also these tables generate pressure and mass density in CGS units, so the code to read in files will need to be adjusted slightly.  (Recall that 1 Bayre (cgs) = 0.1 PA (SI) and 1 g/cm$^3$ = 10$^3$ kg/m$^3$ .  
+
+I need to adjust my procedure for calculating the derivative because now I have $P(\rho)$ and not $P(\mathcal{E})$.  Since $\mathcal{E} = \rho c^{2}$, I will use the method described above except to multiply the output density by $c^2$. 
+
+In order to compare the functionals, I had to reproduce them after the integration (It doesn't make sense to collect them in the integrator because it will loop back over time steps multiple times.   I used the integrators output radius, pressure, and mass (using solve\_ivp's dense\_output='true').
+
+\begin{lstlisting}
+    rho_plot = []
+    E_plot = []
+    F_plot = []
+    r2Q_1 = []
+    r2Q_2 = []
+    r2Q_3 = []
 
 
+    for x in range(0,len(p)):
+        temp = EOS_fromfile(p[x])
+        rho_plot.append(temp)
+        E_plot.append(temp*c**2.)
+        temp1 = (2. * m[x] * G)/ (r[x] * c**2.)
+
+        dpde = deriv_fromfile(p[x])
+
+        F_plot.append((1. - ((4. * pi * G * r[x]**2.)/(c**4.)) * (E_plot[x] - p[x]) ) * (1. - temp1)**(-1.))
+        r2Q_1.append(((4. * pi * r[x]**2. * G )/ c**4.) * ( 5. * E_plot[x] + 9. * p[x] + (E_plot[x]+p[x])/(dpde))*(1.-temp1)**(-1.)) 
+        r2Q_2.append(- 6. * (1. - temp1)**(-1.))
+        r2Q_3.append(- temp1**2.  * (1. + ((4. * pi * r[x]**3. * p[x])/(m[x] * c**2.)))**2. * (1. - temp1)**(-2.))
+\end{lstlisting}
+
+I also modified the deriv\_fromfile function to this:
+
+\begin{lstlisting}
+def deriv_fromfile(p):
+    p2 = p + p*10**-10. 
+    p1 = p - p*10**-10. 
+    E2 = EOS_fromfile(p2) * c**2.
+    E1 = EOS_fromfile(p1) * c**2. 
+    h = E2-E1
+
+    deriv = 2.*p*10**(-10.)/h
+    if p < 0:
+        deriv = 0
+        
+    return deriv
+\end{lstlisting}
+
+Then, I plotted the values calculated here against the ones provide by Ingo.
+
+\begin{center}
+\hbox{
+\includegraphics[width=0.47\textwidth]{plots/GR/rho_sly.pdf}
+\includegraphics[width=0.47\textwidth]{plots/GR/y_sly.pdf}}
+\end{center}
+\begin{center}
+\hbox{
+\includegraphics[width=0.47\textwidth]{plots/GR/r2q_1_sly.pdf}
+\includegraphics[width=0.47\textwidth]{plots/GR/r2q_2_sly.pdf}}
+\end{center}
+\begin{center}
+\hbox{
+\includegraphics[width=0.47\textwidth]{plots/GR/r2q_3_sly.pdf}
+\includegraphics[width=0.47\textwidth]{plots/GR/f_sly.pdf}}
+\end{center}
+
+\begin{center}
+\hbox{
+\includegraphics[width=0.47\textwidth]{plots/GR/sly_tidal.pdf}
+\includegraphics[width=0.47\textwidth]{plots/GR/sly_MR.pdf}}
+\end{center}
+
+Now that this is working, I need to go back to the Chiral-EFT EOS.  Instead of attempted to change the derivative and TOV functions to reflect the fact that Ingo's EOS files have energy density instead of mass density, I change the energy density into mass density when I first read in the data.  
+
+\begin{lstlisting}
+data = np.loadtxt("EOS_files/EOS_nsat_ind1.dat",skiprows=0,delimiter='\t')
+data = data.transpose()
+print np.shape(data)
+
+eos_ps = data[1]      
+eos_ps = eos_ps * from_mev      	#pressure (SI)
+eos_Es = data[2]    
+eos_Es = eos_Es * from_mev          	#Energy density (SI)
+eos_rhos = eos_Es / c**2.			#Mass Density (SI)
+\end{lstlisting}
+
+Using this, I ran the code with Chiral-EFT EOS ($index=1$). The mass, radius, tidal deformability tables are available in the git repo for our paper, so I plotted the tidal deformability as a function of neutron star radius.
+
+\begin{center}
+\hbox{
+\includegraphics[width=0.47\textwidth]{plots/GR/M_lam_1.pdf}}
+\end{center}
+
+It sees that the answer is correct, but there are large errors.  There are a few places to look for errors: the integration step size and the derivative calculation to start. I have already set the the maximum step size to a small value to improve the mass radius curve accuracy.  So, I start with he derivative.  There are two things I can think of the $\delta$ value is too large or there are round off errors due to the fact that $\rho$ and $P$ are rather different orders of magnitude.  To reduce errors induced by the order of magnitude difference, I will introduce a scale factor.   This made no significant change.
+
+Next, I wanted to try a numerical convergence test on the integrator.   To do this, I tested a range of step sizes for the same central pressure and output the tidal deformability.  This showed a wide range of tidal deformabilities, which tells me that I need to do a better convergence test.  
+
+$P_{c} = 10^{34}$
+\begin{tabular}{|c | c|} \hline
+$1.0 \times 10^1$ & 1133 \\ 
+$3.6 \times 10^0$ & 1139 \\
+$1.3 \times 10^0$ & 1141 \\
+$4.6 \times 10^{-1}$ &  1145 \\
+$1.7 \times 10^{-1}$ & 1146 \\
+$6.0 \times 10^{-2}$ & 4160 \\ 
+$2.2 \times 10^{-2}$ & 3981 \\
+$7.7 \times 10^{-3}$ & 4307 \\ 
+$2.8 \times 10^{-3}$ & 4265 \\
+$1.0 \times 10^{-3}$ & 4093  \\
+\hline
+\end{tabular}
+
+It's obvious that even with small step sizes, the integrator is not converging.  I will need to do a run to see at what step size it converges and to what value.These runs take a long time, however. First,I will do a run at various pressures with a small step size to compare this to the actual values and see if this resolves the discrepency between my results and Ingo's. 
 
 
+\begin{center}
+\hbox{
+\includegraphics[width=0.47\textwidth]{plots/GR/M_tidal_convereged.png}}
+%\caption{step size = $5 \times 10^{-3}$}
+\end{center}
+ 
 
 \subsection{Geometric Units} 
 

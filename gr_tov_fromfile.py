@@ -20,26 +20,33 @@ from_mev = 1.602176565 * 10.**(32)  #This is to SI, to cgs its 10^33
 # READ IN THE EOS 
 
 
-data = np.loadtxt("EOS_files/EOS_nsat_ind1.dat",skiprows=0,delimiter='\t')
+"""data = np.loadtxt("EOS_files/EOS_nsat_ind1.dat",skiprows=0,delimiter='\t')
 data = data.transpose()
 #print np.shape(data)
-
-
 
 eos_ps = data[1]      
 eos_ps = eos_ps * from_mev                  #second column is pressure
 #print max(eos_ps)
 eos_pg = eos_ps * G * c**(-4.)              #conversion to dimensionless quantities
-print min(eos_ps)
-print max(eos_ps)
-print len(eos_ps)
 
 eos_rhos = data[2]    
 eos_rhos = eos_rhos * from_mev              #Third column is denisty
-eos_rhog = eos_rhos * G * c**(-4.)          #Use G * c**-4 because this is energy density
-print min(eos_rhos/c**2.)
-print max(eos_rhos/c**2.)
-print len(eos_rhos)
+eos_rhog = eos_rhos * G * c**(-4.)          #Use G * c**-4 because this is energy density"""
+
+
+data = np.loadtxt("sly_compare/sly_eos_dense.dat",skiprows=1,delimiter='\t')
+data = data.transpose()
+eos_ps = data[1]                #pressure in cgs
+eos_ps = eos_ps * 0.1           #pressure in SI
+print "pressure = ", eos_ps
+eos_pg = eos_ps * G * c**(-4.)              #conversion to dimensionless quantities
+
+
+eos_rhos = data[2]              #mass density in cgs
+eos_rhos = eos_rhos * 10**3.    #mass 
+print "mass densities = ", eos_rhos
+eos_rhog = eos_rhos * G * c**(-2.)          #Use G * c**-2 because this is mass density
+
 
 
 
@@ -98,7 +105,7 @@ t_eval = np.linspace(r_0,r_stop,1000)
 p_low = 1. * from_mev                           #Ingo says to start with ~ 1MeV cm^-3
 #print p_low
 
-pressures = np.logspace(32,35,num=20)           #p_max in the file from Ingo is 2.4 x 10^35, so max needs to be less than that 
+pressures = np.logspace(30,36,num=20)           #p_max in the file from Ingo is 2.4 x 10^35, so max needs to be less than that 
 #pressures  = [10**34.,10**34. 
 pressures = pressures * G * c**(-4.)
 
@@ -113,7 +120,7 @@ nums = np.linspace(10.**5.,10.**8.,num=100)
 #step_size = np.linspace(1.,10**(-5.))
 step_size = 1.
 #print step_size
-
+rho_c_list = []
 
 
 for x in pressures:
@@ -122,6 +129,7 @@ for x in pressures:
 
     p_c = x
     rho_c = EOS_geometric_fromfile(p_c)
+    rho_c_list.append(rho_c)
 
     t_eval = np.linspace(r_0,r_stop,num=10.**5.)
     p_0 = x/p_c
@@ -152,9 +160,11 @@ for x in pressures:
 
     """plt.plot(r,M)
     plt.xlabel("radius (m)")
-    plt.ylabel("pressure")
-    plt.savefig("plots/mass_profile_geometric_" + str(i) + ".pdf")
+    plt.ylabel("mass")
+    plt.show()
     plt.close()
+    #plt.savefig("plots/mass_profile_geometric_" + str(i) + ".pdf")
+    #plt.close()"""
 
 
 
@@ -167,7 +177,7 @@ for x in pressures:
     #plt.ylabel("pressure")
     #plt.savefig("plots/pressure_profile_SI_" + str(i) + ".pdf")
     #plt.close()
-    i+=1"""
+    #i+=1
 
 
 #f= open("EOS_files/mass_radius_447.dat",'w+')
@@ -198,11 +208,24 @@ plt.close()"""
 
 #print np.shape(radii)
 #print np.shape(masses)
+"""for x in range(0,len(rho_c_list)):
+    rho_c_list[x] = rho_c_list[x] * c**2. / G
+    rho_c_list[x] = rho_c_list[x] / 10**(14.)
 
-plt.scatter(radii,masses,c=pressures, cmap='inferno',norm=matplotlib.colors.LogNorm())
+plt.scatter(rho_c_list,masses,c=pressures, cmap='inferno',norm=matplotlib.colors.LogNorm())
 plt.legend()
-plt.xlabel(r'radius (m)')
+#plt.xlim(0,50)
+plt.ylim(0,3)
+plt.xlabel(r'$\rho_c[10^14 g/cm^3]$')
 plt.ylabel(r'Mass (M$_{\odot}$)')
+plt.show()"""
+
+plt.scatter(masses, radii,c=pressures, cmap='inferno',norm=matplotlib.colors.LogNorm())
+plt.legend()
+plt.ylabel(r'radius (m)')
+plt.xlabel(r'Mass (M$_{\odot}$)')
+plt.xlim(0,3)
+plt.ylim(0,20)
 #plt.savefig("plots/GR/mass_radius_chiraleft_447.pdf")
 #plt.close()
 plt.show()
