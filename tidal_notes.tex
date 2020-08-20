@@ -112,16 +112,20 @@ r^{2} Q(r) &= \frac{4 \pi r^{2} G}{c^{4}} \bigg[ 5 \mathcal{E}(r) + 9 P(r) + \fr
 The code for these three equations is as follows:
 
 \begin{lstlisting}
-temp1 = (2. * M * G)/ (r * c**2.)
+    temp1 = (2. * M * G)/ (r * c**2.)
+    dpde = deriv_fromfile(p)
 
-F = (1. - ((4. * pi * G * r**2.)/(c**4.)) * (E - p) ) * (1. - temp1)**(-1.)
 
-r2Q = ((4. * pi * G * r**2.)/(c**4.)) * (5. * E + 9. * p + ((E + p)/(dpde))) * (1. - temp1)**(-1.) \
+    F = (1. - ((4. * pi * G * r**2.)/(c**4.)) * (E - p) ) * (1. - temp1)**(-1.)
+
+
+    r2Q = ((4. * pi * G * r**2.)/(c**4.)) * (5. * E + 9. * p + ((E + p)/(dpde))) * (1. - temp1)**(-1.) \
          -  6. * ( 1.- temp1)**(-1.)    \
          -  temp1**2.  * (1. + ((4. * pi * p * r**3.)/(M  * c**2.)))**2. * (1. - temp1)**(-2.)
+    #print "r2Q = ", r2Q
 
-dydr = - (1./r) *  (yval**2. + yval * F + r2Q ) 
 
+    dydr = - (1./r) *  (yval**2. + yval * F + r2Q ) 
 
 \end{lstlisting}
 
@@ -231,8 +235,6 @@ Given that the equations are written in physical units, I will start with the SI
 
 
 
-
-
 \subsection{Polytropes}
 
 The paper \cite{Hinderer_2008}, as mentioned, calculates the Love numbers of polytropes.  The results are given in terms of compactness.  Ideally, I would use the polytrope equation of state and compare to her results to ensure my code is correct.  However, I'm not sure what K value she uses in the polytrope.  I can't tell if the relation is independent of K value (but it seems to be).  So I will look at the compactnesses generated using the K values I have already in the code.  Where compactness is 
@@ -252,9 +254,6 @@ $(C = 0.20, k_2 = 0.096)$  vs  $(C = 0.20, k_2 = 0.095)$ \\
 $(C = 0.26, k_2 = 0.047)$  vs  $(C = 0.15, k_2 = 0.057)$ \\ 
 
 The next step then
-
-
-
 
 \subsection{Chiral EFT} 
 
@@ -283,9 +282,10 @@ data = data.transpose()
 print np.shape(data)
 
 eos_ps = data[1]      
-eos_ps = eos_ps * from_mev      
-eos_rhos = data[2]    
-eos_rhos = eos_rhos * from_mev          #This is energy density
+eos_ps = eos_ps * from_mev      	#pressure (SI)
+eos_Es = data[2]    
+eos_Es = eos_Es * from_mev          	#Energy density (SI)
+eos_rhos = eos_Es / c**2.			#Mass Density (SI)
 
 
 def EOS_fromfile(p):
@@ -318,43 +318,42 @@ The code for this is:
 def deriv_fromfile(p):
     p2 = p + p*10**-10. 
     p1 = p - p*10**-10. 
-    rho2 = EOS_fromfile(p2)
-    rho1 = EOS_fromfile(p1)
-    h = rho2-rho1
+    E2 = EOS_fromfile(p2) * c**2.
+    E1 = EOS_fromfile(p1) * c**2. 
+    h = E2-E1
 
     deriv = 2.*p*10**(-10.)/h
     if p < 0:
         deriv = 0
+        
     return deriv
 \end{lstlisting}
 
 Note: the integrator drops into negative values of pressure when it's in the last few steps.  Since the EOS is only defined for $P>0$, it doesnt make sense t find the derivative of the EOS when $P<0$.  So, I set the derivative = 0.  (This value shouldnt matter because the integrator outputs only results for $P>0$.
 
-\subsubsection{Problems}
+In order to test this, Ingo provided me with tables and plots from when he first developed his own code.  It shows $F(r)$, $r^{2} Q$, and $y_r$ for the SLy equation of state.  It even breaks $r^2Q$ down into the three terms.  
 
-The results from this code do not agree with the know solutions for Ingo's EOS.  I know that the error is in the differential equation for $y_r$ because I have cross checked $k_2$.  Ingo provided me with tables and plots from when he first developed his own code.  It shows $F(r)$, $r^{2} Q$, and $y_r$ for the SLy equation of state.  It even breaks $r^2Q$ down into the three terms.  
-
+\begin{enumerate}
+\item
 \begin{equation}
 \frac{4 \pi r^{2} G}{c^{4}} \bigg[ 5 \mathcal{E}(r) + 9 P(r) + \frac{\mathcal{E}(r) + P(r)}{dP(r)/d\mathcal{E}(r)}   \bigg] \bigg(  1 - \frac{2 M(r) G}{r c^{2}} \bigg) ^{-1} 
 \end{equation}
-
+\item
 \begin{equation}
-6 \bigg( 1- \frac{2 M(r) G}{r c^{2}}  \bigg)^{-1}
+- 6 \bigg( 1- \frac{2 M(r) G}{r c^{2}}  \bigg)^{-1}
 \end{equation}
-
+\item
 \begin{equation}
-\frac{4 M^{2}(r) G^{2}}{r^{2}c^{4}} \bigg( 1 + \frac{4 \pi P(r)}{M(r) c^{2}}  \bigg)^{2} \bigg( 1 - \frac{2 M(r) G}{r c^{2}} \bigg)^{-2}
+- \frac{4 M^{2}(r) G^{2}}{r^{2}c^{4}} \bigg( 1 + \frac{4 \pi P(r)}{M(r) c^{2}}  \bigg)^{2} \bigg( 1 - \frac{2 M(r) G}{r c^{2}} \bigg)^{-2}
 \end{equation}
+\end{enumerate}
 
 \textbf{Note} I will attach the page of plots at the end for reference.  
 
-Based on these plots, I am guessing that the error is in the first term... the most likely culprit is the derivative term.
 
-To do a 1:1 comparison. I need to use the FPS and SLy equations of state.  I found the tables for these online.  The tables are quite sparse, but the website also provides a code to calculate the eos.  I downloaded the .c file.  The current code is designed to be interactive.  I'm going to change it so that it prints the data to a file instead of a screen.  This is done by changing the main() function from the code.  This portion f the code DOES NOT do any calculations, so I am not in danger of messing up the EOS.  I generated a list of pressures similar to those in my chiral-eft files using a python script to make logarithmically spaced points then put those points through the code.  
+To do a 1:1 comparison. I need to use the FPS or SLy equation of state.  I found the tables for these online.  The tables are quite sparse, but the website also provides a code to calculate the eos.  I downloaded the .c file.  The current code is designed to be interactive.  I'm going to change it so that it prints the data to a file instead of a screen.  This is done by changing the main() function from the code.  This portion f the code DOES NOT do any calculations, so I am not in danger of messing up the EOS.  I generated a list of pressures similar to those in my chiral-eft files using a python script to make logarithmically spaced points then put those points through the code.  
 
-Also these tables generate pressure and mass density in CGS units, so the code to read in files will need to be adjusted slightly.  (Recall that 1 Bayre (cgs) = 0.1 PA (SI) and 1 g/cm$^3$ = 10$^3$ kg/m$^3$ .  
-
-I need to adjust my procedure for calculating the derivative because now I have $P(\rho)$ and not $P(\mathcal{E})$.  Since $\mathcal{E} = \rho c^{2}$, I will use the method described above except to multiply the output density by $c^2$. 
+Also these tables generate pressure and mass density in CGS units, so the code to read in files will need to be adjusted slightly.  (Recall that 1 Bayre (cgs) = 0.1 PA (SI) and 1 g/cm$^3$ = 10$^3$ kg/m$^3$.  
 
 In order to compare the functionals, I had to reproduce them after the integration (It doesn't make sense to collect them in the integrator because it will loop back over time steps multiple times.   I used the integrators output radius, pressure, and mass (using solve\_ivp's dense\_output='true').
 
@@ -381,22 +380,6 @@ In order to compare the functionals, I had to reproduce them after the integrati
         r2Q_3.append(- temp1**2.  * (1. + ((4. * pi * r[x]**3. * p[x])/(m[x] * c**2.)))**2. * (1. - temp1)**(-2.))
 \end{lstlisting}
 
-I also modified the deriv\_fromfile function to this:
-
-\begin{lstlisting}
-def deriv_fromfile(p):
-    p2 = p + p*10**-10. 
-    p1 = p - p*10**-10. 
-    E2 = EOS_fromfile(p2) * c**2.
-    E1 = EOS_fromfile(p1) * c**2. 
-    h = E2-E1
-
-    deriv = 2.*p*10**(-10.)/h
-    if p < 0:
-        deriv = 0
-        
-    return deriv
-\end{lstlisting}
 
 Then, I plotted the values calculated here against the ones provide by Ingo.
 
@@ -422,20 +405,6 @@ Then, I plotted the values calculated here against the ones provide by Ingo.
 \includegraphics[width=0.47\textwidth]{plots/GR/sly_MR.pdf}}
 \end{center}
 
-Now that this is working, I need to go back to the Chiral-EFT EOS.  Instead of attempted to change the derivative and TOV functions to reflect the fact that Ingo's EOS files have energy density instead of mass density, I change the energy density into mass density when I first read in the data.  
-
-\begin{lstlisting}
-data = np.loadtxt("EOS_files/EOS_nsat_ind1.dat",skiprows=0,delimiter='\t')
-data = data.transpose()
-print np.shape(data)
-
-eos_ps = data[1]      
-eos_ps = eos_ps * from_mev      	#pressure (SI)
-eos_Es = data[2]    
-eos_Es = eos_Es * from_mev          	#Energy density (SI)
-eos_rhos = eos_Es / c**2.			#Mass Density (SI)
-\end{lstlisting}
-
 Using this, I ran the code with Chiral-EFT EOS ($index=1$). The mass, radius, tidal deformability tables are available in the git repo for our paper, so I plotted the tidal deformability as a function of neutron star radius.
 
 \begin{center}
@@ -443,9 +412,7 @@ Using this, I ran the code with Chiral-EFT EOS ($index=1$). The mass, radius, ti
 \includegraphics[width=0.47\textwidth]{plots/GR/M_lam_1.pdf}}
 \end{center}
 
-It sees that the answer is correct, but there are large errors.  There are a few places to look for errors: the integration step size and the derivative calculation to start. I have already set the the maximum step size to a small value to improve the mass radius curve accuracy.  So, I start with he derivative.  There are two things I can think of the $\delta$ value is too large or there are round off errors due to the fact that $\rho$ and $P$ are rather different orders of magnitude.  To reduce errors induced by the order of magnitude difference, I will introduce a scale factor.   This made no significant change.
-
-Next, I wanted to try a numerical convergence test on the integrator.   To do this, I tested a range of step sizes for the same central pressure and output the tidal deformability.  This showed a wide range of tidal deformabilities, which tells me that I need to do a better convergence test.  
+It sees that the answer is roughly correct, but there are large errors.  This can be caused by using too large a step size in the integrators.  I can test this by doing a cnvergence test with increasingly smaller step.  To do this, I tested a range of step sizes for the same central pressure and output the tidal deformability.  This showed a wide range of tidal deformabilities, which tells me that I need to use a smaller step size than the one needed for just the mass radius calculation (step\_size = 1.).  
 
 $P_{c} = 10^{34}$
 \begin{tabular}{|c | c|} \hline
@@ -462,7 +429,7 @@ $1.0 \times 10^{-3}$ & 4093  \\
 \hline
 \end{tabular}
 
-It's obvious that even with small step sizes, the integrator is not converging.  I will need to do a run to see at what step size it converges and to what value.These runs take a long time, however. First,I will do a run at various pressures with a small step size to compare this to the actual values and see if this resolves the discrepency between my results and Ingo's. 
+It's obvious that the integrator is not converging with the step size initially used.  I will need to do a run to see at what step size it converges and to what value.  These runs take a long time, however. First,I will do a run at various pressures with a small step size to compare this to the actual values and see if this resolves the discrepancy between my results and Ingo's. 
 
 
 \begin{center}
@@ -470,7 +437,13 @@ It's obvious that even with small step sizes, the integrator is not converging. 
 \includegraphics[width=0.47\textwidth]{plots/GR/M_tidal_convereged.png}}
 %\caption{step size = $5 \times 10^{-3}$}
 \end{center}
+
+Since the values agree better, I will run a convergence test on atlas.  
+
+Running the code with an appropriate step size $\approx 10^{-3}$ is slow.  I want to see if I can reduce the error in another way.  One way is to try and make the derivative function more accurate.  I tried to make the $\delta P$ value smaller, but when I dropped it an order of magnitude (from $10^{-10}$ to $10^{-11}$) the tidal deformability value was way off.  
  
+ 
+
 
 \subsection{Geometric Units} 
 

@@ -281,76 +281,85 @@ steps = np.logspace(-3,1,5)
 steps = steps[::-1]
 print steps 
 
-delta_p =  np.logspace(-12,-7,7)
+delta_p =  np.logspace(-11,-10,2)
+average_error = []
+
+for q in delta_p:
+    radii_tidal = []
+    radii = []
+    masses = []
+    masses_tidal = []
+    lambdas = []
+    ks = []
 
 
-for x in pressures:
-    #--------------------------------------------------
-    #    INTEGRATION
-    #--------------------------------------------------
+    for x in pressures:
+        #--------------------------------------------------
+        #    INTEGRATION
+        #--------------------------------------------------
 
-    # set initial conditions
-    yval0 = 2.
-    y0 = [M_0, x, phi_0, yval0]
-    delta = 8*10**(-11.)
-    #y0 = [x]
-    print y0
-    print "rho = ", EOS_fromfile(x)
+        # set initial conditions
+        yval0 = 2.
+        y0 = [M_0, x, phi_0, yval0]
+        delta = q
+        #y0 = [x]
+        print y0
+        print "rho = ", EOS_fromfile(x)
 
-    #soln = solve_ivp(TOV_tidal,t_span,y0,method='RK45', events=star_boundary, dense_output=True)
-    soln = solve_ivp(TOV_tidal,t_span,y0,method='RK45', events=star_boundary, max_step=.1, dense_output=True)
+        #soln = solve_ivp(TOV_tidal,t_span,y0,method='RK45', events=star_boundary, dense_output=True)
+        soln = solve_ivp(TOV_tidal,t_span,y0,method='RK45', events=star_boundary, max_step=0.1, dense_output=True)
 
-    r = soln.t
-    m = soln.y[0]
-    p = soln.y[1]
-    phi = soln.y[2]
-    y = soln.y[3]
-    #print soln
+        r = soln.t
+        m = soln.y[0]
+        p = soln.y[1]
+        phi = soln.y[2]
+        y = soln.y[3]
+        #print soln
 
-    radii_tidal.append(r[-1])
-    masses_tidal.append(m[-1])
+        radii_tidal.append(r[-1])
+        masses_tidal.append(m[-1])
 
-    radii.append(r[-1])
-    masses.append(m[-1])
+        radii.append(r[-1])
+        masses.append(m[-1])
 
-    print p[0], r[-1], m[-1]/M_sun
-    #print len(M)
+        print p[0], r[-1], m[-1]/M_sun
+        #print len(M)
 
-    #------------------------------------------------
-    #Calculate the tidal love number
-    #------------------------------------------------
-    y_R = y[-1]
-    R = r[-1]
-    M = m[-1]
+        #------------------------------------------------
+        #Calculate the tidal love number
+        #------------------------------------------------
+        y_R = y[-1]
+        R = r[-1]
+        M = m[-1]
 
-    beta = (G * M)/(R * c**2.)    #compactness
-    tmp = 1. - 2* beta
+        beta = (G * M)/(R * c**2.)    #compactness
+        tmp = 1. - 2* beta
 
-    k2 = ((8. * beta**5.)/5.) * (1. - 2. * beta)**2. * (2. - y_R + (y_R - 1.) * 2. * beta)  \
+        k2 = ((8. * beta**5.)/5.) * (1. - 2. * beta)**2. * (2. - y_R + (y_R - 1.) * 2. * beta)  \
         * ( 2. * beta * (6. - 3. * y_R + 3. * beta * (5. * y_R - 8.)) \
         + 4. * beta**3. * (13. - 11. * y_R + beta * (3.* y_R - 2.) + 2. * beta**2. * (1. + y_R)) \
         + 3. * (1. - 2. * beta)**2. * (2. - y_R + 2. * beta * (y_R - 1.)) * np.log(1. - 2. * beta)) **(-1.)
 
-    #print "k_2 (one) ", k2
+        #print "k_2 (one) ", k2
 
 
 
-    l_dim = 2. * k2 * beta**(-5.) / 3
-    ks.append(k2)
-    lambdas.append(l_dim)
+        l_dim = 2. * k2 * beta**(-5.) / 3
+        ks.append(k2)
+        lambdas.append(l_dim)
 
-    #------------------------------------------------
-    # Diagnostic  Plots
-    #------------------------------------------------
-    """rho_plot = []
-    E_plot = []
-    F_plot = []
-    r2Q_1 = []
-    r2Q_2 = []
-    r2Q_3 = []
+        #------------------------------------------------
+        # Diagnostic  Plots
+        #------------------------------------------------
+        """rho_plot = []
+        E_plot = []
+        F_plot = []
+        r2Q_1 = []
+        r2Q_2 = []
+        r2Q_3 = []
 
 
-    for x in range(0,len(p)):
+        for x in range(0,len(p)):
         temp = EOS_fromfile(p[x])
         #temp = temp / 10**3.
         rho_plot.append(temp)
@@ -367,87 +376,133 @@ for x in pressures:
         r2Q_2.append(- 6. * (1. - temp1)**(-1.))
         r2Q_3.append(- temp1**2.  * (1. + ((4. * pi * r[x]**3. * p[x])/(m[x] * c**2.)))**2. * (1. - temp1)**(-2.))
 
-    plt.plot(r/1000.,r2Q_1,color='r',label='calculated')
-    plt.plot(r_file,r2q_1_file,color='b',label='from file')
-    plt.xlabel(r'radius (km)')
-    plt.ylabel(r'$r^{2} Q(r)_1$')
-    plt.ylim(-20,50)
-    plt.legend()
-    plt.savefig("plots/GR/r2q_1_sly.pdf")
-    plt.close()
-    #plt.show()
+        plt.plot(r/1000.,r2Q_1,color='r',label='calculated')
+        plt.plot(r_file,r2q_1_file,color='b',label='from file')
+        plt.xlabel(r'radius (km)')
+        plt.ylabel(r'$r^{2} Q(r)_1$')
+        plt.ylim(-20,50)
+        plt.legend()
+        plt.savefig("plots/GR/r2q_1_sly.pdf")
+        plt.close()
+        #plt.show()
 
-    plt.plot(r/1000.,r2Q_2,color='r',label='calculated')
-    plt.plot(r_file,r2q_2_file,color='b',label='from file')
-    plt.xlabel(r'radius (km)')
-    plt.ylabel(r'$r^{2} Q(r)_1$')
-    plt.ylim(-20,50)
-    plt.legend()
-    plt.savefig("plots/GR/r2q_2_sly.pdf")
-    plt.close()
-    #plt.show()
+        plt.plot(r/1000.,r2Q_2,color='r',label='calculated')
+        plt.plot(r_file,r2q_2_file,color='b',label='from file')
+        plt.xlabel(r'radius (km)')
+        plt.ylabel(r'$r^{2} Q(r)_1$')
+        plt.ylim(-20,50)
+        plt.legend()
+        plt.savefig("plots/GR/r2q_2_sly.pdf")
+        plt.close()
+        #plt.show()
 
-    plt.plot(r/1000.,r2Q_3,color='r',label='calculated')
-    plt.plot(r_file,r2q_3_file,color='b',label='from file')
-    plt.xlabel(r'radius (km)')
-    plt.ylabel(r'$r^{2} Q(r)_1$')
-    plt.ylim(-20,50)
-    plt.legend()
-    plt.savefig("plots/GR/r2q_3_sly.pdf")
-    plt.close()
-    #plt.show()
+        plt.plot(r/1000.,r2Q_3,color='r',label='calculated')
+        plt.plot(r_file,r2q_3_file,color='b',label='from file')
+        plt.xlabel(r'radius (km)')
+        plt.ylabel(r'$r^{2} Q(r)_1$')
+        plt.ylim(-20,50)
+        plt.legend()
+        plt.savefig("plots/GR/r2q_3_sly.pdf")
+        plt.close()
+        #plt.show()
 
-    plt.plot(r/1000.,F_plot,color='r',label='calculated')
-    plt.plot(r_file,F_file,color='b', label='from file')
+        plt.plot(r/1000.,F_plot,color='r',label='calculated')
+        plt.plot(r_file,F_file,color='b', label='from file')
+        plt.xlabel("radius (km)")
+        plt.ylabel("F(r)")
+        plt.ylim(0,2.5)
+        plt.legend()
+        plt.savefig("plots/GR/f_sly.pdf")
+        plt.close()
+        #plt.show()
+
+        plt.plot(r/1000.,rho_plot, label='calculated')
+        plt.plot(r_file,E_file,label='from file')
+        plt.yscale('log')
+        plt.xlabel("radius (km)")
+        plt.ylabel(r"$\rho kg/m^3$")
+        plt.legend()
+        plt.savefig("plots/GR/rho_sly.pdf")
+        plt.close()
+        #plt.ylim(0,2.5)
+        plt.show()
+
+        plt.plot(r/1000.,y, label='calculated')
+        plt.plot(r_file,y_file,label='from file')
+        plt.xlabel('radius (km)')
+        plt.ylabel('y(r)')
+        plt.legend()
+        plt.savefig("plots/GR/y_sly.pdf")"""
+
+        #plt.show()
+
+        """plt.plot(r,M)
+        plt.xlabel("radius (m)")
+        plt.ylabel("pressure")()
+        plt.savefig("plots/GR/mass_profile_SI_" + str(i) + ".pdf")
+        plt.close()
+
+
+
+        plt.plot(r,p)
+        plt.xlim(0,r_stop)
+        plt.xlabel("radius (m)")
+        plt.ylabel("pressure")
+        plt.savefig("plots/GR/pressure_profile_SI_" + str(i) + ".pdf")
+        plt.close()
+        i+=1"""
+
+    #----------------------------------------
+    # Calculate error for tidal deformability
+    #----------------------------------------
+    for i in range(0,len(masses_tidal)):
+        #print "Radius = ", radii_tidal[x]/1000., "mass = ", masses_tidal[x]/M_sun, "\t lambda = ",  lambdas[x] #, "\t k2 = ", ks[x]
+        masses_tidal[i] = masses_tidal[i]/M_sun
+        radii_tidal[i] = radii_tidal[i]/1000.
+        masses[i] = masses[i]/M_sun
+        radii[i] = radii[i]/1000.
+
+    avg_err = 0.
+
+    for i in range(0,len(radii)):
+        temp = np.interp(masses[i],M_file,LAM_file)
+        err = np.abs((temp - lambdas[i])/temp) * 100
+        avg_err = avg_err + err
+        print "Radius = ", radii_tidal[i], "mass = ", masses_tidal[i], "\t lambda calculated = ",  lambdas[i], "\t lambda = ",  temp, "\t percent error = ", err
+
+    avg_err = avg_err/len(radii)
+
+    print "average error = ", avg_err
+    average_error.append(avg_err)
+
+    """plt.scatter(R_file,M_file,color='r',label='from file')
+    plt.scatter(radii,masses, c=pressures, cmap='inferno', label='calculated')
+    plt.legend()
+    #plt.ylim(0.5,2.5)
     plt.xlabel("radius (km)")
-    plt.ylabel("F(r)")
-    plt.ylim(0,2.5)
+    plt.ylabel(r"Mass (M$_{\odot}$)")
+    plt.show()"""
+
+    plt.scatter(R_file,LAM_file,color = 'r',label='from file')
+    plt.scatter(radii,lambdas, c=pressures, cmap='inferno', label='calculated')
+    plt.yscale('log') 
     plt.legend()
-    plt.savefig("plots/GR/f_sly.pdf")
-    plt.close()
-    #plt.show()
-    
-    plt.plot(r/1000.,rho_plot, label='calculated')
-    plt.plot(r_file,E_file,label='from file')
-    plt.yscale('log')
     plt.xlabel("radius (km)")
-    plt.ylabel(r"$\rho kg/m^3$")
-    plt.legend()
-    plt.savefig("plots/GR/rho_sly.pdf")
-    plt.close()
-    #plt.ylim(0,2.5)
+    plt.ylabel(r"Dimensionless Tidal Deformability ($\tilde{\Lambda}$)")
+    plt.title(r'$P_c = 10^{34}$, $\delta P = $' + str(q) + r' step_size=0.1')
     plt.show()
 
-    plt.plot(r/1000.,y, label='calculated')
-    plt.plot(r_file,y_file,label='from file')
-    plt.xlabel('radius (km)')
-    plt.ylabel('y(r)')
-    plt.legend()
-    plt.savefig("plots/GR/y_sly.pdf")"""
+print "\n"
 
-    #plt.show()
+for x in range(0,len(delta_p)):
+    print "Delta = ", delta_p[x], "\t avg error = ", average_error[x]
 
-    """plt.plot(r,M)
-    plt.xlabel("radius (m)")
-    plt.ylabel("pressure")()
-    plt.savefig("plots/GR/mass_profile_SI_" + str(i) + ".pdf")
-    plt.close()
-
-
-
-    plt.plot(r,p)
-    plt.xlim(0,r_stop)
-    plt.xlabel("radius (m)")
-    plt.ylabel("pressure")
-    plt.savefig("plots/GR/pressure_profile_SI_" + str(i) + ".pdf")
-    plt.close()
-    i+=1"""
 
 #f= open("EOS_files/mass_radius_lambda_1436.dat",'w+')
 #f.write("Mass (M_sun)) \t Radius (km) \t Dimensionless Tidal Deformability \n")
 
-for x in range(0,len(masses_tidal)):
-    print "Radius = ", radii_tidal[x]/1000., "mass = ", masses_tidal[x]/M_sun, "\t lambda = ",  lambdas[x] #, "\t k2 = ", ks[x]
+"""for x in range(0,len(masses_tidal)):
+    #print "Radius = ", radii_tidal[x]/1000., "mass = ", masses_tidal[x]/M_sun, "\t lambda = ",  lambdas[x] #, "\t k2 = ", ks[x]
     masses_tidal[x] = masses_tidal[x]/M_sun
     radii_tidal[x] = radii_tidal[x]/1000.
     masses[x] = masses[x]/M_sun
@@ -455,7 +510,7 @@ for x in range(0,len(masses_tidal)):
     #print masses_tidal[x], "\t", radii_tidal[x], "\n"
     #if radii_tidal[x] < 20.0:
         #temp = str(masses_tidal[x]) + "\t" + str(radii_tidal[x]) + "\t" + str(lambdas[x]) + "\n"
-        #f.write(temp)
+        #f.write(temp)"""
 
 
 
@@ -468,8 +523,11 @@ for x in range(0,len(radii_tidal)):
 
 
 
+#----------------------------------------
+# PLOT COMPARE CALCULATED MASS AND TIDAL TO FILES
+#----------------------------------------
 
-#test cgs
+"""#test cgs
 plt.scatter(R_file,M_file,color='r',label='from file')
 plt.scatter(radii,masses, c=pressures, cmap='inferno', label='calculated')
 plt.legend()
@@ -486,7 +544,7 @@ plt.xlabel("radius (km)")
 plt.ylabel(r"Dimensionless Tidal Deformability ($\tilde{\Lambda}$)")
 plt.title(r'$P_c = 10^{34}$, $\delta P = 8 \times 10^{-11}$, step_size=0.1')
 plt.savefig("plots/GR/deriv_test_6")
-plt.show()
+plt.show()"""
 
 """plt.scatter(steps,lambdas)
 plt.xlim(10**(-6),100)
@@ -518,10 +576,6 @@ for x in range(0,len(masses)):
 
 #radii = radii * 1000.
 #plt.scatter(radii,masses,c=pressures, cmap='inferno',norm=matplotlib.colors.LogNorm())
-
-#----------------------------------------
-# PLOT COMPARE CALCULATED MASS AND TIDAL TO FILES
-#----------------------------------------
 
 """plt.scatter(R_file,LAM_file,color = 'r',label='from file')
 plt.scatter(radii,lambdas, c=pressures, cmap='inferno', label='calculated')
