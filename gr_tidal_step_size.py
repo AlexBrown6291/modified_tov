@@ -254,7 +254,6 @@ r_stop = r_stop * 10.**(3.) #SI = m
 t_span = (r_0,r_stop)
 t_eval = np.linspace(r_0,r_stop,1000)
 #step_size = 5. * 10**(-3.)
-step_size = 1.
 
 #p = np.logspace(25.,45.,num=10) #SI
 pressures = np.logspace(33.5,35,num=10)   
@@ -277,18 +276,15 @@ masses = []
 masses_tidal = []
 lambdas = []
 ks = []
-steps = np.logspace(-3,1,5)
+steps = np.logspace(-4,1,5)
 steps = steps[::-1]
 print steps 
 step_size = 5*10**(-3.)
 
-#delta_p = np.logspace(-10.5,-9.5,10)
-del_p_low = 0.7 * 10.**(-10.)
-del_p_high = 1.2 * 10.**(-10.)
-delta_p = np.linspace(.5 * 10**(-10), 50 * 10**(-10),10 )
+delta_p =  np.logspace(-11,-9,5)
 average_error = []
 
-for q in delta_p:
+for q in steps:
     radii_tidal = []
     radii = []
     masses = []
@@ -305,13 +301,13 @@ for q in delta_p:
         # set initial conditions
         yval0 = 2.
         y0 = [M_0, x, phi_0, yval0]
-        delta = q
+        delta = 10.**(-10.)
         #y0 = [x]
         print y0
         print "rho = ", EOS_fromfile(x)
 
         #soln = solve_ivp(TOV_tidal,t_span,y0,method='RK45', events=star_boundary, dense_output=True)
-        soln = solve_ivp(TOV_tidal,t_span,y0,method='RK45', events=star_boundary, max_step=step_size, dense_output=True)
+        soln = solve_ivp(TOV_tidal,t_span,y0,method='RK45', events=star_boundary, max_step=q, dense_output=True)
 
         r = soln.t
         m = soln.y[0]
@@ -493,15 +489,28 @@ for q in delta_p:
     plt.legend()
     plt.xlabel("radius (km)")
     plt.ylabel(r"Dimensionless Tidal Deformability ($\tilde{\Lambda}$)")
-    plt.title(r'$\delta P = $' + str(q) + r' step_size=$5 \times 10^{-3}$')
-    plt.savefig('/work/stephanie.brown/WWW/alternate_theories/tidal/deriv_test_'+str(q)+'.png')
+    plt.title(r'$P_c = 10^{34}$, $\delta P = $' + str(q) + r' step_size=0.1')
+    plt.savefig('/work/stephanie.brown/WWW/alternate_theories/tidal/stepsize_test_'+str(q)+'.png')
     plt.clf()
     #plt.show()
+
+
+plt.scatter(steps,average_error)
+plt.xlim(10**(-5),100)
+plt.xscale('log')
+plt.xlabel('step size (m)')
+plt.ylabel(r"Percent Error")
+plt.savefig('/work/stephanie.brown/WWW/alternate_theories/tidal/stepsize_error.png')
+plt.close()
+    
 
 print "\n"
 
 for x in range(0,len(delta_p)):
-    print "Delta = ", delta_p[x], "\t avg error = ", average_error[x]
+    print "stepsize = ", steps[x], "\t avg error = ", average_error[x]
+
+
+
 
 
 #f= open("EOS_files/mass_radius_lambda_1436.dat",'w+')
