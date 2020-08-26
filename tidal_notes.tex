@@ -17,6 +17,7 @@
 
 
 
+
 \newcommand*\widefbox[1]{\fbox{\hspace{2em}#1\hspace{2em}}}
 
 
@@ -106,7 +107,7 @@ F(r) = \bigg[ 1-\frac{4 \pi r^{2} G }{c^{4}} (\mathcal{E}(r)-P(r))  \bigg] \bigg
 \begin{align} \label{eq:r2Q}
 r^{2} Q(r) &= \frac{4 \pi r^{2} G}{c^{4}} \bigg[ 5 \mathcal{E}(r) + 9 P(r) + \frac{\mathcal{E}(r) + P(r)}{dP(r)/d\mathcal{E}(r)}   \bigg] \bigg(  1 - \frac{2 M(r) G}{r c^{2}} \bigg) ^{-1}  \\
 & - \;\; 6 \bigg( 1- \frac{2 M(r) G}{r c^{2}}  \bigg)^{-1}. \nonumber  \\
-& - \;\; \frac{4 M^{2}(r) G^{2}}{r^{2}c^{4}} \bigg( 1 + \frac{4 \pi P(r)}{M(r) c^{2}}  \bigg)^{2} \bigg( 1 - \frac{2 M(r) G}{r c^{2}} \bigg)^{-2}. \nonumber
+& - \;\; \frac{4 M^{2}(r) G^{2}}{r^{2}c^{4}} \bigg( 1 + \frac{4 \pi  r^3 P(r)}{M(r) c^{2}}  \bigg)^{2} \bigg( 1 - \frac{2 M(r) G}{r c^{2}} \bigg)^{-2}. \nonumber
 \end{align}
 
 The code for these three equations is as follows:
@@ -344,7 +345,7 @@ In order to test this, Ingo provided me with tables and plots from when he first
 \end{equation}
 \item
 \begin{equation}
-- \frac{4 M^{2}(r) G^{2}}{r^{2}c^{4}} \bigg( 1 + \frac{4 \pi P(r)}{M(r) c^{2}}  \bigg)^{2} \bigg( 1 - \frac{2 M(r) G}{r c^{2}} \bigg)^{-2}
+- \frac{4 M^{2}(r) G^{2}}{r^{2}c^{4}} \bigg( 1 + \frac{4 \pi  r^3 P(r)}{M(r) c^{2}}  \bigg)^{2} \bigg( 1 - \frac{2 M(r) G}{r c^{2}} \bigg)^{-2}
 \end{equation}
 \end{enumerate}
 
@@ -383,6 +384,7 @@ In order to compare the functionals, I had to reproduce them after the integrati
 
 Then, I plotted the values calculated here against the ones provide by Ingo.
 
+\begin{figure}
 \begin{center}
 \hbox{
 \includegraphics[width=0.47\textwidth]{plots/GR/rho_sly.pdf}
@@ -398,24 +400,32 @@ Then, I plotted the values calculated here against the ones provide by Ingo.
 \includegraphics[width=0.47\textwidth]{plots/GR/r2q_3_sly.pdf}
 \includegraphics[width=0.47\textwidth]{plots/GR/f_sly.pdf}}
 \end{center}
+\end{figure}
 
+\begin{figure}
 \begin{center}
 \hbox{
 \includegraphics[width=0.47\textwidth]{plots/GR/sly_tidal.pdf}
 \includegraphics[width=0.47\textwidth]{plots/GR/sly_MR.pdf}}
 \end{center}
+\end{figure}
 
 Using this, I ran the code with Chiral-EFT EOS ($index=1$). The mass, radius, tidal deformability tables are available in the git repo for our paper, so I plotted the tidal deformability as a function of neutron star radius.
 
+\begin{figure}
 \begin{center}
 \hbox{
 \includegraphics[width=0.47\textwidth]{plots/GR/M_lam_1.pdf}}
 \end{center}
+\end{figure}
 
 It sees that the answer is roughly correct, but there are large errors.  This can be caused by using too large a step size in the integrators.  I can test this by doing a cnvergence test with increasingly smaller step.  To do this, I tested a range of step sizes for the same central pressure and output the tidal deformability.  This showed a wide range of tidal deformabilities, which tells me that I need to use a smaller step size than the one needed for just the mass radius calculation (step\_size = 1.).  
 
-$P_{c} = 10^{34}$
+\begin{table}[h]
+\centering
+\caption{$P_{c} = 10^{34}$}
 \begin{tabular}{|c | c|} \hline
+Step Size & Tidal deformability \\ \hline
 $1.0 \times 10^1$ & 1133 \\ 
 $3.6 \times 10^0$ & 1139 \\
 $1.3 \times 10^0$ & 1141 \\
@@ -428,8 +438,9 @@ $2.8 \times 10^{-3}$ & 4265 \\
 $1.0 \times 10^{-3}$ & 4093  \\
 \hline
 \end{tabular}
+\end{table}
 
-It's obvious that the integrator is not converging with the step size initially used.  I will need to do a run to see at what step size it converges and to what value.  These runs take a long time, however. First,I will do a run at various pressures with a small step size to compare this to the actual values and see if this resolves the discrepancy between my results and Ingo's. 
+It's obvious that the integrator is not converging with the step size initially used.  I will need to do a run to see at what step size it converges and to what value.  These runs take a long time, however. First, I will do a run at various pressures with a small step size to compare this to the actual values and see if this resolves the discrepancy between my results and Ingo's. 
 
 
 \begin{center}
@@ -440,14 +451,50 @@ It's obvious that the integrator is not converging with the step size initially 
 
 Since the values agree better, I will run a convergence test on atlas.  
 
-Running the code with an appropriate step size $\approx 10^{-3}$ is slow.  I want to see if I can reduce the error in another way.  One way is to try and make the derivative function more accurate.  I tried to make the $\delta P$ value smaller, but when I dropped it an order of magnitude (from $10^{-10}$ to $10^{-11}$) the tidal deformability value was way off.  
- 
- 
+Running the code with an appropriate step size $\approx 10^{-3}$ is slow.  I want to see if I can reduce the error in another way.  One way is to try and make the derivative function more accurate.  I tried to make the $\delta P$ value smaller, but when I dropped it an order of magnitude (from $10^{-10}$ to $10^{-11}$) the tidal deformability value was way off.  The answer is also off if I go to a larger step size of $10^{-9}$.  I made a run to calculate the percent error from a range of different values.  After I did a broad range show in the table below, I narrowed in on the segment where the error is the lowest ($6.81 \times 10^{-11}$ , $1.14 \times 10^{-10}$) to get a 
 
+
+\begin{table}[h]
+\caption{EOS = 1nsat, SI unit code,  step size = $4 \times 10^{-3}$ }
+\centering
+\begin{tabular}{|c | c| c|} \hline
+$\delta P$ &  Avg \% Error (run 1) &  Avg \% Error (run 2)  \\ \hline
+$3.16 \times 10^{-11}$ & 72\%  & 72\% \\
+$4.08 \times 10^{-11}$  & 66\% & 66\%  \\
+$5.27 \times 10^{-11}$  & 57\% & 57\% \\
+$6.81 \times 10^{-11}$  & 47\% & 46\% \\
+$8.80 \times 10^{-11}$  & 18\% & 19\%  \\
+$1.14 \times 10^{-10}$  & 24\% & 24\%\\
+$1.47 \times 10^{-10}$  & 116\% & 116\%\\
+$1.90 \times 10^{-10}$  & 1628\% & 1629 \%\\
+$2.44 \times 10^{-10}$  & 1089\% &1090\% \\
+$3.16 \times 10^{-10}$  & 615\% & 616 \% \\
+\hline
+\end{tabular}
+\end{table}
+
+
+\begin{table}[h]
+\caption{EOS = 1nsat, SI unit code,  $\delta P = 10^{-10}$ }
+\centering
+\begin{tabular}{|c | c|} \hline
+Step Size (m) &  Average Percent error \\ \hline
+$1.00  \times 10^{+1}$ & 65\% \\
+$5.62 \times 10^{-1}$  & 65\% \\
+$3.16 \times 10^{-2}$  & 8.8\% \\
+$1.78 \times 10^{-3}$  & 3.8\% \\
+$1.00 \times 10^{-4}$  & 1.9\% \\
+\hline
+\end{tabular}
+\end{table}
+ 
+\textbf{In Progress}
+\clearpage
 
 \subsection{Geometric Units} 
 
-To reduce numerical errors, the code should be done in geometric units with dimensionless variables.  For this to work, I need to change the diff eq for $y_R$.  This is done by adjusting the equations  for the functionals $F(r)$ and $Q(r)$, since there are no factors of $G$ or $c$ elsewhere in the equation. \textbf{I need to figure out the units of $y_R$ and see if the initial value needs to be scaled somehow}..  I also want to introduce the dimensionless variables for $P$ and $\rho$.  The are defined as $P = \bar{P} P_c$ and $\mathcal{E} = \rho = \bar{\rho} \rho_{c} = \bar{\mathcal{E}} \mathcal{E}_{c}$
+To reduce numerical errors, the code should be done in geometric units with dimensionless variables.  For this to work, I need to change the diff eq for $y_R$.  This is done by adjusting the equations for the functionals $F(r)$ and $Q(r)$, since there are no factors of $G$ or $c$ elsewhere in the equation.  Luckily, $0 \leq y(r) \leq 2.5$ so this does not need to be scaled.  
+I also want to introduce the dimensionless variables for $P$ and $\rho$.  The are defined as $P = \bar{P} P_c$ and $\mathcal{E} = \rho = \bar{\rho} \rho_{c} = \bar{\mathcal{E}} \mathcal{E}_{c}$
 
 \begin{equation} 
 F(r) = \bigg[ 1- 4 \pi r^{2} (\mathcal{E}_{c}\bar{\mathcal{E}}(r)-P_{c}\bar{P}(r))  \bigg] \bigg( 1-\frac{2 M(r) }{r}  \bigg)^{-1}
@@ -456,14 +503,22 @@ F(r) = \bigg[ 1- 4 \pi r^{2} (\mathcal{E}_{c}\bar{\mathcal{E}}(r)-P_{c}\bar{P}(r
 \begin{align} 
 r^{2} Q(r) &= 4 \pi r^{2} \bigg[ 5 \mathcal{E}_{c}\bar{\mathcal{E}}(r)+ 9 P_{c}\bar{P}(r) + \frac{\mathcal{E}_{c}\bar{\mathcal{E}}(r) + P_{c}\bar{P}(r)}{dP(r)/d\mathcal{E}(r)}   \bigg] \bigg(  1 - \frac{2 M(r)}{r} \bigg) ^{-1} \\
 & - \;\; 6 \bigg( 1- \frac{2 M(r) }{r }  \bigg)^{-1} \nonumber \\	
-& - \;\; \frac{4 M^{2}(r)}{r^{2}} \bigg( 1 + \frac{4 \pi P_{c} \bar{P}(r)}{M(r)}  \bigg)^{2} \bigg( 1 - \frac{2 M(r)}{r} \bigg)^{-2} \nonumber
+& - \;\; \frac{4 M^{2}(r)}{r^{2}} \bigg( 1 + \frac{4 \pi r^3 P_{c} \bar{P}(r)}{M(r)}  \bigg)^{2} \bigg( 1 - \frac{2 M(r)}{r} \bigg)^{-2} \nonumber
 \end{align}
 
+The issue of the derivative function is complex.  I believe that I need the derivative of $P$ in geometric units with respect to $\mathcal{E}/\rho$.  The $P$ in the TOV function is scaled. 
+The main difference is the need to change from dimensionless pressure to pressure in geometric units.  But the process goes as follows:
 
+\begin{enumerate}
+\item Take dimensionless pressure as a variable (same)
+\item multiply by scale factor to get geometric pressure
+\item use EOS\_geometric\_from file instead of EOS\_scaled\_fromfile to get geomtetric density ($\mathcal{E} = \rho$)
+\item use the same algorithm as before to calculate the derivative
+\end{enumerate}
 
+\section{Scalar Tensor Theory}
 
-
-
+Tidal deformability is a function of the metric.  The metric is the same in STT and GR.  This might mean that the tidal deformability equations are THE SAME!  I need to look at the details of the derivation though.
 
 \section{Tidal Deformabilities and Gravitational Waves}
 
