@@ -16,9 +16,11 @@ M_sun = 1.989 * 10.**(30.) #SI kg
 from_mev = 1.602176565 * 10.**(32)  #This is to SI, to cgs its 10^33 
 
 
+#---------------------------------------------------------
 
 # READ IN THE EOS 
 
+#---------------------------------------------------------
 
 """data = np.loadtxt("EOS_files/EOS_nsat_ind1.dat",skiprows=0,delimiter='\t')
 data = data.transpose()
@@ -34,6 +36,9 @@ eos_rhos = eos_rhos * from_mev              #Third column is denisty
 eos_rhog = eos_rhos * G * c**(-4.)          #Use G * c**-4 because this is energy density"""
 
 
+
+
+
 data = np.loadtxt("sly_compare/sly_eos_dense.dat",skiprows=1,delimiter='\t')
 data = data.transpose()
 eos_ps = data[1]                #pressure in cgs
@@ -46,6 +51,33 @@ eos_rhos = data[2]              #mass density in cgs
 eos_rhos = eos_rhos * 10**3.    #mass 
 print "mass densities = ", eos_rhos
 eos_rhog = eos_rhos * G * c**(-2.)          #Use G * c**-2 because this is mass density
+
+plt.plot(eos_ps,eos_rhos,label='sly')
+#plt.plot(p,rho_f,label='interpolated')
+plt.yscale('log')
+plt.xscale('log')
+#plt.xlim(0,1.1* 10.**30.)
+#plt.ylim(0,2.*10.**15.)
+plt.legend()
+plt.xlabel('pressure Pascals')
+plt.ylabel('density kg/m^3')
+
+
+#STT Thesis modified polytrope
+
+data = np.loadtxt("EOS_files/STT_EOS1_SI.dat",skiprows=1,delimiter='\t')
+data = data.transpose()
+
+eos_ps = data[0]                            #first column is pressure
+eos_pg = eos_ps * G * c**(-4.)              #conversion to dimensionless quantities
+
+eos_rhos = data[1]                          #second column is denisty
+eos_rhog = eos_rhos * G * c**(-2.)          #Use G * c**-2 because this is mass density
+
+
+plt.plot(eos_ps,eos_rhos,label='STT')
+plt.show()
+
 
 
 
@@ -97,7 +129,7 @@ star_boundary.terminal = True
  
 M_0 = 0.
 r_0 = 0.0001 #m
-r_stop = 20. #km
+r_stop = 40. #km
 r_stop = r_stop * 10.**(3.) #SI = m
 t_span = (r_0,r_stop)
 t_eval = np.linspace(r_0,r_stop,1000)
@@ -220,12 +252,12 @@ plt.xlabel(r'$\rho_c[10^14 g/cm^3]$')
 plt.ylabel(r'Mass (M$_{\odot}$)')
 plt.show()"""
 
-plt.scatter(masses, radii,c=pressures, cmap='inferno',norm=matplotlib.colors.LogNorm())
+plt.scatter(radii, masses, c=pressures, cmap='inferno',norm=matplotlib.colors.LogNorm())
 plt.legend()
 plt.ylabel(r'radius (m)')
 plt.xlabel(r'Mass (M$_{\odot}$)')
-plt.xlim(0,3)
-plt.ylim(0,20)
+plt.ylim(0,3)
+plt.xlim(0,40)
 #plt.savefig("plots/GR/mass_radius_chiraleft_447.pdf")
 #plt.close()
 plt.show()
